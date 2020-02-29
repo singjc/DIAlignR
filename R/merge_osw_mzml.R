@@ -107,12 +107,15 @@ getOswFiles <- function(dataPath, filenames, maxFdrQuery = 0.05, analyteFDR = 0.
     } else{
       oswName <- paste0(file.path(dataPath, "osw", filenames$runs[i]), ".osw")
     }
+    
+    ##***************************************************
+    ##  OSW File Checks
+    ##***************************************************
+    # TODO Add checks for OSW file
+    
     # Get transition indices for MS2 fragment-ions.
     oswAnalytes <- fetchAnalytesInfo(oswName, maxFdrQuery, oswMerged, analytes = analytes,
                                      filename = filenames$filename[i], runType, analyteInGroupLabel, identifying = identifying)
-
-    
-    
 
     # Get chromatogram indices from the header file.
     if(is.null(mzPntrs)){

@@ -43,20 +43,34 @@
 #'  analytes = c("IHFLSPVRPFTLTPGDEEESFIQLITPVR_3"), filename = filenames$filename[3],
 #'   runType = "DIA_proteomics", analyteInGroupLabel = FALSE)
 #' }
+#' 
+#' @importFrom tictoc tic toc
 fetchAnalytesInfo <- function(oswName, maxFdrQuery, oswMerged,
                               analytes, filename, runType, analyteInGroupLabel = FALSE,
                               identifying = FALSE){
+  
   # Establish a connection of SQLite file.
   con <- DBI::dbConnect(RSQLite::SQLite(), dbname = oswName)
+  
+  # Check for presence of required SCORE_MS2 table
+  check_sqlite_table( conn=con, table="SCORE_MS2", msg="[DIAlignR::fetchAnalytesInfo:::check_sqlite_table]")
+  # If analysing IPF results, check for SCORE_IPF table
+  if ( runType=="DIA_Proteomics_ipf" ) check_sqlite_table( conn=con, table="SCORE_IPF", msg="[DIAlignR::fetchAnalytesInfo:::check_sqlite_table]")
+  
   # Generate a query.
+  ## TODO: Add fitlers for Identifying transitions at given PEP
   query <- getQuery(maxFdrQuery, oswMerged, analytes = analytes,
                     filename = filename, runType = runType,
                     analyteInGroupLabel = analyteInGroupLabel,
                     identifying = identifying)
   # Run query to get peptides, their coordinates and scores.
-  analytesInfo <- tryCatch(expr = DBI::dbGetQuery(con, statement = query),
+  tictoc::tic()
+  analytesInfo <- tryCatch(expr = DBI::dbGetQuery(con, statement =  query ),
                            finally = DBI::dbDisconnect(con))
-  analytesInfo
+  exec_time <- tictoc::toc(quiet = TRUE)
+  message( sprintf("[DIAlignR::fetchAnalytesInfo(R#67)] Extracting analyte feature information for %s took %s seconds", basename(filename), round(exec_time$toc - exec_time$tic, 3) ))
+  
+  return( analytesInfo )
 }
 
 

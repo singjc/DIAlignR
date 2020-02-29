@@ -112,6 +112,20 @@ getListObj <- function(x, name) {
   }
 }
 
+#' check_sqlite_table
+#' @param conn Connection to database
+#' @param table Character vector to test for, if present in database
+#' @param msg A character to pre-append to stop error message. (Optional)
+#' @return Logical value, TRUE if table is present
+#' 
+#' @importFrom DBI dbExistsTable
+check_sqlite_table <- function( conn, table, msg="" ) {
+  if( !DBI::dbExistsTable( conn, table ) ){
+    out.msg <- sprintf("%s An Error occured! There was no %s Table found in %s\n", msg, table, conn@dbname)
+    stop( out.msg, call.=FALSE )
+  }  
+}
+
 testAlignObj <- function(analyteInGroupLabel = FALSE){
   if(analyteInGroupLabel){
     AlignObj <- new("AffineAlignObjLight",

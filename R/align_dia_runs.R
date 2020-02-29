@@ -68,6 +68,29 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
                               hardConstrain = FALSE, samples4gradient = 100,
                               samplingTime = 3.4,  RSEdistFactor = 3.5, saveFiles = FALSE,
                               mzPntrs = NULL){
+  
+  if ( F ){
+    library(DIAlignR)
+    library(dplyr)
+   dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/lower_product_mz_threshold/DIAlignR_Analysis/data"
+   alignType = "hybrid"; analyteInGroupLabel = FALSE; oswMerged = TRUE;
+   runs = NULL; analytes = NULL; nameCutPattern = "(.*)(/)(.*)";
+   maxFdrQuery = 0.05; maxFdrLoess = 0.01; analyteFDR = 0.01;
+   spanvalue = 0.1; 
+   # runType = "DIA_Proteomics";
+   runType = "DIA_Proteomics_ipf"
+   normalization = "mean"; simMeasure = "dotProductMasked";
+   XICfilter = "sgolay"; SgolayFiltOrd = 4; SgolayFiltLen = 9;
+   goFactor = 0.125; geFactor = 40;
+   cosAngleThresh = 0.3; OverlapAlignment = TRUE;
+   dotProdThresh = 0.96; gapQuantile = 0.5;
+   hardConstrain = FALSE; samples4gradient = 100;
+   samplingTime = 3.4;  RSEdistFactor = 3.5; saveFiles = FALSE;
+   mzPntrs = NULL
+   identifying=FALSE
+   i=4
+  }
+  
   # Check if filter length is odd for Savitzky-Golay filter.
   if( (SgolayFiltLen %% 2) != 1){
     return(stop("SgolayFiltLen can only be odd number"))
@@ -197,9 +220,14 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
   message("Execution time for alignment = ", end_time - start_time)
   
   colnames(rtTbl) <- unname(runs[colnames(rtTbl)])
+  colnames(lwTbl) <- unname(runs[colnames(lwTbl)])
+  colnames(rwTbl) <- unname(runs[colnames(rwTbl)])
   colnames(intesityTbl) <- unname(runs[colnames(intesityTbl)])
+  
   if(saveFiles){
     utils::write.table(rtTbl,file = "rtTbl.csv", col.names = NA, sep = ",")
+    utils::write.table(lwTbl,file = "lwTbl.csv", col.names = NA, sep = ",")
+    utils::write.table(rwTbl,file = "rwTbl.csv", col.names = NA, sep = ",")
     utils::write.table(intesityTbl,file = "intesityTbl.csv", col.names = NA, sep = ",")
     print("Data matrix is available in the current directory")
     return(1)
@@ -276,6 +304,9 @@ getAlignObjs <- function(analytes, runs, dataPath = ".", alignType = "hybrid",
                          dotProdThresh = 0.96, gapQuantile = 0.5,
                          hardConstrain = FALSE, samples4gradient = 100,
                          samplingTime = 3.4,  RSEdistFactor = 3.5, objType = "light", mzPntrs = NULL){
+  
+
+  
   if(length(runs) != 2){
     print("For pairwise alignment, two runs are required.")
     return(NULL)

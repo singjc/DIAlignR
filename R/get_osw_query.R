@@ -9,7 +9,7 @@
 #' @param oswMerged (logical) TRUE for experiment-wide FDR and FALSE for run-specific FDR by pyprophet.
 #' @param analytes (vector of strings) transition_group_ids for which features are to be extracted. analyteInGroupLabel must be set according the pattern used here.
 #' @param filename (string) as mentioned in RUN table of osw files..
-#' @param runType (char) This must be one of the strings "DIA_proteomics", "DIA_Metabolomics".
+#' @param runType (char) This must be one of the strings "DIA_proteomics", "DIA_Metabolomics", "DIA_Proteomics_ipf".
 #' @param analyteInGroupLabel (logical) TRUE for getting analytes as PRECURSOR.GROUP_LABEL from osw file.
 #' @param identifying logical value indicating the extraction of identifying transtions. (Default: FALSE)
 #'
@@ -87,6 +87,50 @@ getQuery <- function(maxFdrQuery, oswMerged = TRUE, analytes = NULL,
   INNER JOIN TRANSITION_PRECURSOR_MAPPING ON TRANSITION_PRECURSOR_MAPPING.PRECURSOR_ID = PRECURSOR.ID
   LEFT JOIN FEATURE_MS2 ON FEATURE_MS2.FEATURE_ID = FEATURE.ID
   ORDER BY transition_group_id;")
+  } else if ( runType=="DIA_Proteomics_ipf" ) {
+
+    query <- sprintf(
+      "
+      SELECT 
+      %s, --- #transition_group_id
+      PEPTIDE_ON_PREC.MODIFIED_SEQUENCE AS original_target_assay,
+      RUN.FILENAME AS filename,
+      FEATURE.ID as feature_id,
+      FEATURE.EXP_RT AS RT,
+      FEATURE.DELTA_RT AS delta_rt,
+      PRECURSOR.LIBRARY_RT AS assay_RT,
+      FEATURE_MS2.AREA_INTENSITY AS Intensity,
+      FEATURE.LEFT_WIDTH AS leftWidth,
+      FEATURE.RIGHT_WIDTH AS rightWidth,
+      SCORE_MS2.RANK AS peak_group_rank,
+      SCORE_IPF.QVALUE AS m_score,
+      TRANSITION.ID AS transition_id,
+      TRANSITION.DETECTING AS detecting_transitions,
+      TRANSITION.IDENTIFYING AS identifying_transitions
+      FROM SCORE_IPF
+      INNER JOIN FEATURE ON FEATURE.ID = SCORE_IPF.FEATURE_ID
+      INNER JOIN FEATURE_MS2 ON FEATURE_MS2.FEATURE_ID = FEATURE.ID
+      INNER JOIN SCORE_MS2 ON SCORE_MS2.FEATURE_ID = FEATURE.ID
+      INNER JOIN RUN ON RUN.ID = FEATURE.RUN_ID
+      INNER JOIN PEPTIDE ON PEPTIDE.ID = SCORE_IPF.PEPTIDE_ID
+      INNER JOIN ( SELECT SCORE_IPF.FEATURE_ID, MIN(SCORE_IPF.QVALUE) AS MIN_QVALUE FROM SCORE_IPF GROUP BY SCORE_IPF.FEATURE_ID ) AS SCORE_IPF_MIN ON SCORE_IPF_MIN.FEATURE_ID = SCORE_IPF.FEATURE_ID
+	    INNER JOIN TRANSITION_PRECURSOR_MAPPING ON TRANSITION_PRECURSOR_MAPPING.PRECURSOR_ID = FEATURE.PRECURSOR_ID
+      INNER JOIN TRANSITION ON TRANSITION.ID = TRANSITION_PRECURSOR_MAPPING.TRANSITION_ID
+	    INNER JOIN PRECURSOR ON PRECURSOR.ID = TRANSITION_PRECURSOR_MAPPING.PRECURSOR_ID
+	    INNER JOIN PRECURSOR_PEPTIDE_MAPPING ON PRECURSOR_PEPTIDE_MAPPING.PRECURSOR_ID = PRECURSOR.ID
+		  INNER JOIN PEPTIDE AS PEPTIDE_ON_PREC ON PEPTIDE_ON_PREC.ID = PRECURSOR_PEPTIDE_MAPPING.PEPTIDE_ID
+      WHERE SCORE_IPF.QVALUE = SCORE_IPF_MIN.MIN_QVALUE
+      AND SCORE_IPF.QVALUE < %s
+      %s --- #selectAnalytes
+      %s --- #matchFilename
+      AND (
+      TRANSITION.DETECTING=TRUE 
+      OR TRANSITION.IDENTIFYING=%s --- #identifying
+          ) ORDER BY transition_group_id,
+      peak_group_rank;
+      ", transition_group_id, maxFdrQuery, selectAnalytes, matchFilename, identifying
+    )
+    
   } else{
     query <- paste0("SELECT", transition_group_id,",
   RUN.FILENAME AS filename,
