@@ -76,7 +76,7 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
    alignType = "hybrid"; analyteInGroupLabel = FALSE; oswMerged = TRUE;
    runs = NULL; analytes = NULL; nameCutPattern = "(.*)(/)(.*)";
    maxFdrQuery = 0.05; maxFdrLoess = 0.01; analyteFDR = 0.01;
-   spanvalue = 0.1; 
+   spanvalue = 1; 
    # runType = "DIA_Proteomics";
    runType = "DIA_Proteomics_ipf"
    normalization = "mean"; simMeasure = "dotProductMasked";
@@ -170,6 +170,9 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
                                    SgolayFiltLen = SgolayFiltLen)
     }
     
+    cat("\n---------------------- START --------------------------\n")
+    cat( sprintf("analyte: %s\n", analyte) )
+    
     # Align all runs to reference run
     for(eXp in exps){
       # Get XIC_group from experiment run
@@ -185,7 +188,12 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
           loessFits[[pair]] <- Loess.fit
         }
         # Set up constraints for penalizing similarity matrix
+        ## TODO: @Shubham, there are cases where adaptiveRT is NAN, does this affect calculations?
         adaptiveRT <- RSEdistFactor*Loess.fit$s
+        
+        
+        cat( sprintf("eXp: %s\ndim(XICs.ref): %s\ndim(XICs.eXp: %s\nadaptiveRT: %s\n", eXp, paste(unlist(lapply(XICs.ref, function(x) dim(x)[1])), collapse=", "), paste(unlist(lapply(XICs.eXp, function(x) dim(x)[1])), collapse=", "), adaptiveRT) )
+        
         # Get retention time in experiment run mapped to reference run retention time.
         eXpRT <- getMappedRT(refPeak$RT, XICs.ref, XICs.eXp, Loess.fit, alignType, adaptiveRT, samplingTime,
                              normalization, simMeasure, goFactor, geFactor, cosAngleThresh,
@@ -207,6 +215,9 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
         next
       }
     }
+    
+    cat("\n----------------------  END  --------------------------\n")
+    
     # Get the feature from reference run
     lwTbl[analyteIdx, refRunIdx] <- refPeak[["leftWidth"]]
     rtTbl[analyteIdx, refRunIdx] <- refPeak[["RT"]]
