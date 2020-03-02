@@ -156,7 +156,7 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
     refRunIdx <- getRefRun(oswFiles, analyte)
     refPeak <- oswFiles[[refRunIdx]] %>%
       dplyr::group_by( transition_group_id ) %>%
-      dplyr::filter(transition_group_id == analyte ) %>%
+      dplyr::filter(transition_group_id == analyte  & m_score==min(m_score) & peak_group_rank==min(peak_group_rank)  ) %>%
       dplyr::ungroup() %>%
       dplyr::select(leftWidth, RT, rightWidth, Intensity)
     
