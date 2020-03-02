@@ -72,9 +72,11 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
   if ( F ){
     library(DIAlignR)
     library(dplyr)
+    library(zoo)
    dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/lower_product_mz_threshold/DIAlignR_Analysis/data"
    alignType = "hybrid"; analyteInGroupLabel = FALSE; oswMerged = TRUE;
    runs = NULL; analytes = NULL; nameCutPattern = "(.*)(/)(.*)";
+   runs <- c('chludwig_K150309_007b_SW_1_6', 'chludwig_K150309_008_SW_1_4', 'chludwig_K150309_009_SW_1_3', 'chludwig_K150309_010_SW_1_2', 'chludwig_K150309_011_SW_1_1point5', 'chludwig_K150309_012_SW_1_1', 'chludwig_K150309_013_SW_0')
    maxFdrQuery = 0.05; maxFdrLoess = 0.01; analyteFDR = 0.01;
    spanvalue = 1; 
    # runType = "DIA_Proteomics";
@@ -195,7 +197,7 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
         cat( sprintf("eXp: %s\ndim(XICs.ref): %s\ndim(XICs.eXp: %s\nadaptiveRT: %s\n", eXp, paste(unlist(lapply(XICs.ref, function(x) dim(x)[1])), collapse=", "), paste(unlist(lapply(XICs.eXp, function(x) dim(x)[1])), collapse=", "), adaptiveRT) )
         
         # Get retention time in experiment run mapped to reference run retention time.
-        eXpRT <- getMappedRT(refPeak$RT, XICs.ref, XICs.eXp, Loess.fit, alignType, adaptiveRT, samplingTime,
+        eXpRT <- getMappedRT(refRT = refPeak$RT, XICs.ref = XICs.ref, XICs.eXp = XICs.eXp, Loess.fit = Loess.fit, alignType = alignType, adaptiveRT = adaptiveRT, samplingTime,
                              normalization, simMeasure, goFactor, geFactor, cosAngleThresh,
                              OverlapAlignment, dotProdThresh, gapQuantile, hardConstrain,
                              samples4gradient)
