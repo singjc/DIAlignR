@@ -44,7 +44,7 @@ mergeOswAnalytes_ChromHeader <- function(oswAnalytes, chromHead, analyteFDR =  1
   # TODO: Make sure that transition_id has same order across runs. IMO should be specified in query.
   assign("oswAnalytes", dplyr::left_join(oswAnalytes, chromHead,
                                   by = c("transition_id" = "chromatogramId")) %>%
-    dplyr::group_by(transition_group_id, peak_group_rank) %>%
+    dplyr::group_by(transition_group_id, peak_group_rank, RT) %>%
     dplyr::mutate(transition_ids = paste0(transition_id, collapse = ","),
                   chromatogramIndex = paste0(chromatogramIndex, collapse = ",")) %>%
     dplyr::ungroup() %>% dplyr::select(-transition_id) %>% dplyr::distinct(),

@@ -70,7 +70,7 @@ fetchAnalytesInfo <- function(oswName, maxFdrQuery, oswMerged,
   ## Second pass filter to ensure only one analyte is being mapped once to the same peak
   ## There are cases for ipf where different assays would result in the same peptide being mapped to the same peak multiple times due to being the winning hypothesis
   analytesInfo$RT_Floored <- floor(analytesInfo$RT)
-    
+
   analytesInfo %>%
     dplyr::group_by( transition_group_id, filename, RT_Floored  ) %>%
     dplyr::add_count() %>%
@@ -80,9 +80,22 @@ fetchAnalytesInfo <- function(oswName, maxFdrQuery, oswMerged,
     dplyr::filter( ifelse( n>6, ifelse(m_score==min(m_score), T, F), T ) ) -> analytesInfo
   analytesInfo$n <- NULL
   analytesInfo %>%
-    dplyr::group_by( transition_group_id, filename, RT_Floored  ) %>%
+    dplyr::group_by( transition_group_id, filename, peak_group_rank  ) %>%
     dplyr::add_count() %>%
     dplyr::ungroup() -> analytesInfo
+  
+  analytesInfo %>%
+    dplyr::group_by( transition_group_id, filename, peak_group_rank  ) %>%
+    dplyr::filter( ifelse( n>6, ifelse(m_score==min(m_score), T, F), T ) ) -> analytesInfo
+  
+  analytesInfo$n <- NULL
+  analytesInfo %>%
+    dplyr::group_by( transition_group_id, filename  ) %>%
+    dplyr::add_count() %>%
+    dplyr::ungroup() -> analytesInfo
+  
+  
+  
   analytesInfo$RT_Floored <- NULL
   analytesInfo$n <- NULL
   exec_time <- tictoc::toc(quiet = TRUE)
