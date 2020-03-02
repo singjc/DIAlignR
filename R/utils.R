@@ -27,7 +27,10 @@ getRefRun <- function(oswFiles, analyte){
   refRunIdx <- NULL
   for(runIdx in seq_along(oswFiles)){
     m_score <- oswFiles[[runIdx]] %>%
-      dplyr::filter(transition_group_id == analyte & peak_group_rank == 1) %>% .$m_score
+      dplyr::group_by( transition_group_id ) %>%
+      dplyr::filter(transition_group_id == analyte & m_score==min(m_score) & peak_group_rank==min(peak_group_rank) )  %>%
+      dplyr::ungroup() %>% .$m_score
+
     # Check for numeric(0) condition and proceed.
     if(length(m_score) != 0){
       if(m_score < minMscore){
