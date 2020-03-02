@@ -62,7 +62,27 @@ getRefRun <- function(oswFiles, analyte){
 #' }
 #' @seealso \code{\link{getOswFiles}, \link{getOswAnalytes}}
 selectChromIndices <- function(oswFiles, runname, analyte){
-
+  
+  ## TMP Fix
+  ## Second pass filter to ensure only one analyte is being mapped once to the same peak
+  ## There are cases for ipf where different assays would result in the same peptide being mapped to the same peak multiple times due to being the winning hypothesis
+  oswFiles[[runname]] %>%
+    dplyr::group_by( transition_group_id, filename ) %>%
+    dplyr::add_count() %>%
+    dplyr::ungroup() -> tmp
+  tmp %>%
+    dplyr::group_by( transition_group_id, filename ) %>%
+    dplyr::filter( ifelse( n>1, ifelse(m_score==min(m_score), T, F), T ) ) -> tmp
+  ## Remove count column
+  tmp$n <- NULL
+  ## count again to check if there are sitll more than one entry
+  tmp %>%
+    dplyr::group_by( transition_group_id, filename ) %>%
+    dplyr::add_count() %>%
+    dplyr::ungroup() -> tmp
+  ## Remove count column
+  tmp$n <- NULL
+  
   # Pick chromatrogram indices from osw table.
   chromIndices <- tmp %>%
     dplyr::filter(transition_group_id == analyte) %>% .$chromatogramIndex
