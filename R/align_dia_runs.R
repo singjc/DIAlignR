@@ -155,7 +155,9 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
     # Select reference run based on m-score
     refRunIdx <- getRefRun(oswFiles, analyte)
     refPeak <- oswFiles[[refRunIdx]] %>%
-      dplyr::filter(transition_group_id == analyte & peak_group_rank == 1) %>%
+      dplyr::group_by( transition_group_id ) %>%
+      dplyr::filter(transition_group_id == analyte ) %>%
+      dplyr::ungroup() %>%
       dplyr::select(leftWidth, RT, rightWidth, Intensity)
     
     # Get XIC_group from reference run. if missing, go to next analyte.
