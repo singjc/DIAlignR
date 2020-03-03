@@ -21,7 +21,7 @@ Imports:
     mzR (>= 2.18),
     signal,
     ggplot2, scales, gridExtra,
-    RSQLite, DBI,
+    RSQLite, DBI, tictoc,
     Rcpp
 Suggests:
     knitr,

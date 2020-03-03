@@ -76,7 +76,7 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
    dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/lower_product_mz_threshold/DIAlignR_Analysis/data"
    alignType = "hybrid"; analyteInGroupLabel = FALSE; oswMerged = TRUE;
    runs = NULL; analytes = NULL; nameCutPattern = "(.*)(/)(.*)";
-   runs <- c('chludwig_K150309_007b_SW_1_6', 'chludwig_K150309_008_SW_1_4', 'chludwig_K150309_009_SW_1_3', 'chludwig_K150309_010_SW_1_2', 'chludwig_K150309_011_SW_1_1point5', 'chludwig_K150309_012_SW_1_1', 'chludwig_K150309_013_SW_0')
+   # runs <- c('chludwig_K150309_007b_SW_1_6', 'chludwig_K150309_008_SW_1_4', 'chludwig_K150309_009_SW_1_3', 'chludwig_K150309_010_SW_1_2', 'chludwig_K150309_011_SW_1_1point5', 'chludwig_K150309_012_SW_1_1', 'chludwig_K150309_013_SW_0')
    maxFdrQuery = 0.05; maxFdrLoess = 0.01; analyteFDR = 0.01;
    spanvalue = 1; 
    # runType = "DIA_Proteomics";
@@ -91,6 +91,9 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
    mzPntrs = NULL
    identifying=FALSE
    i=4
+   analyteFDR = 1
+   analyte <- "RPS(Phospho)QPLNTLSPK(Label:13C(6)15N(2))_3"
+   eXp <- "run1"
   }
   
   # Check if filter length is odd for Savitzky-Golay filter.
@@ -116,7 +119,8 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
     names(runs) <- rownames(filenames)
     # Collect all the pointers for each mzML file.
     message("Collecting metadata from mzML files.")
-    mzPntrs <- getMZMLpointers(dataPath, runs)
+    # mzPntrs <- getMZMLpointers(dataPath, runs)
+    mzPntrs <- getmzPntrs(dataPath)
     message("Metadata is collected from mzML files.")
   }
   
