@@ -27,9 +27,10 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("m_score"))
 #'  maxFdrGlobal = 0.05, spanvalue = 0.1)
 #' }
 getLOESSfit <- function(oswFiles, ref, eXp, maxFdrGlobal, spanvalue = 0.1){
-  df.ref <-  oswFiles[[ref]] %>% dplyr::filter(m_score <= maxFdrGlobal & peak_group_rank == 1) %>%
+  ## TODO: Note: Changed peak_group_rank==1 to min peak_group_rank
+  df.ref <-  oswFiles[[ref]] %>% dplyr::filter(m_score <= maxFdrGlobal & peak_group_rank==min(peak_group_rank)) %>%
     dplyr::select(transition_group_id, RT)
-  df.eXp <-  oswFiles[[eXp]] %>% dplyr::filter(m_score <= maxFdrGlobal & peak_group_rank == 1) %>%
+  df.eXp <-  oswFiles[[eXp]] %>% dplyr::filter(m_score <= maxFdrGlobal & peak_group_rank==min(peak_group_rank)) %>%
     dplyr::select(transition_group_id, RT)
   RUNS_RT <- dplyr::inner_join(df.ref, df.eXp, by = "transition_group_id", suffix = c(".ref", ".eXp"))
   Loess.fit <- loess(RT.eXp ~ RT.ref, data = RUNS_RT,
@@ -64,9 +65,10 @@ getLOESSfit <- function(oswFiles, ref, eXp, maxFdrGlobal, spanvalue = 0.1){
 #'  maxFdrGlobal = 0.05)
 #' }
 getLinearfit <- function(oswFiles, ref, eXp, maxFdrGlobal){
-  df.ref <-  oswFiles[[ref]] %>% dplyr::filter(m_score <= maxFdrGlobal & peak_group_rank == 1) %>%
+  ## TODO: Note: Changed peak_group_rank==1 to min peak_group_rank
+  df.ref <-  oswFiles[[ref]] %>% dplyr::filter(m_score <= maxFdrGlobal & peak_group_rank==min(peak_group_rank)) %>%
     dplyr::select(transition_group_id, RT)
-  df.eXp <-  oswFiles[[eXp]] %>% dplyr::filter(m_score <= maxFdrGlobal & peak_group_rank == 1) %>%
+  df.eXp <-  oswFiles[[eXp]] %>% dplyr::filter(m_score <= maxFdrGlobal & peak_group_rank==min(peak_group_rank)) %>%
     dplyr::select(transition_group_id, RT)
   RUNS_RT <- dplyr::inner_join(df.ref, df.eXp, by = "transition_group_id", suffix = c(".ref", ".eXp"))
   # For testing we want to avoid validation peptides getting used in the fit.

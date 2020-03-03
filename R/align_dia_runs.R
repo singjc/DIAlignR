@@ -158,12 +158,25 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
     analyte <- refAnalytes[analyteIdx]
     # Select reference run based on m-score
     refRunIdx <- getRefRun(oswFiles, analyte)
-    refPeak <- oswFiles[[refRunIdx]] %>%
+    oswFiles[[refRunIdx]] %>%
       dplyr::group_by( transition_group_id ) %>%
-      dplyr::filter(transition_group_id == analyte  & m_score==min(m_score) & peak_group_rank==min(peak_group_rank)  ) %>%
-      dplyr::ungroup() %>%
-      dplyr::select(leftWidth, RT, rightWidth, Intensity)
+      dplyr::filter(transition_group_id == analyte  & m_score==min(m_score)  ) %>%
+      dplyr::ungroup() -> refPeak
     
+    ## Do a second pass filter in case there are two features with the same m_score
+    ## in that instance, filter on the peakgroup_rank
+    if ( dim(refPeak)[1] > 1 ){
+      oswFiles[[refRunIdx]] %>%
+        dplyr::group_by( transition_group_id ) %>%
+        dplyr::filter(transition_group_id == analyte  & peak_group_rank==min(peak_group_rank) ) %>%
+        dplyr::ungroup() -> refPeak
+    }
+    
+    ## Select useful columns
+    refPeak %>%
+      dplyr::select(leftWidth, RT, rightWidth, Intensity) -> refPeak
+         
+         
     # Get XIC_group from reference run. if missing, go to next analyte.
     ref <- names(runs)[refRunIdx]
     exps <- setdiff(names(runs), ref)
@@ -426,8 +439,9 @@ getAlignObjs <- function(analytes, runs, dataPath = ".", alignType = "hybrid",
         # Attach intensities of experiment XICs.
         AlignObjs[[analyte]][[runs[eXp]]] <- XICs.eXp
         # Attach peak boundaries to the object.
+        ## TODO: Note: Changed peak_group_rank==1 to peak_group_rank==min(peak_group_rank)
         AlignObjs[[analyte]][[paste0(pair, "_pk")]] <- oswFiles[[refRunIdx]] %>%
-          dplyr::filter(transition_group_id == analyte & peak_group_rank == 1) %>%
+          dplyr::filter(transition_group_id == analyte & peak_group_rank==min(peak_group_rank)) %>%
           dplyr::select(leftWidth, RT, rightWidth) %>%
           as.vector()
       }
