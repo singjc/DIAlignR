@@ -200,7 +200,7 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
         adaptiveRT <- RSEdistFactor*Loess.fit$s
         
         
-        cat( sprintf("eXp: %s\ndim(XICs.ref): %s\ndim(XICs.eXp: %s\nadaptiveRT: %s\n", eXp, paste(unlist(lapply(XICs.ref, function(x) dim(x)[1])), collapse=", "), paste(unlist(lapply(XICs.eXp, function(x) dim(x)[1])), collapse=", "), adaptiveRT) )
+        cat( sprintf("eXp: %s\nrun: %s\ndim(XICs.ref): %s\ndim(XICs.eXp: %s\nadaptiveRT: %s\n", eXp, filenames$runs[which(rownames(filenames) %in% eXp)], paste(unlist(lapply(XICs.ref, function(x) dim(x)[1])), collapse=", "), paste(unlist(lapply(XICs.eXp, function(x) dim(x)[1])), collapse=", "), adaptiveRT) )
         
         # Get retention time in experiment run mapped to reference run retention time.
         eXpRT <- getMappedRT(refRT = refPeak$RT, XICs.ref = XICs.ref, XICs.eXp = XICs.eXp, Loess.fit = Loess.fit, alignType = alignType, adaptiveRT = adaptiveRT, samplingTime,

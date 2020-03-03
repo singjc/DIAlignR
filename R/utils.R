@@ -26,19 +26,37 @@ getRefRun <- function(oswFiles, analyte){
   minMscore <- 1
   refRunIdx <- NULL
   for(runIdx in seq_along(oswFiles)){
+    ## Filter first on m_score to find the best candiate peptide feature
     m_score <- oswFiles[[runIdx]] %>%
+      # dplyr::filter(transition_group_id == analyte )
       dplyr::group_by( transition_group_id ) %>%
-      dplyr::filter(transition_group_id == analyte & m_score==min(m_score) & peak_group_rank==min(peak_group_rank) )  %>%
-      dplyr::ungroup() %>% .$m_score
-
-    # Check for numeric(0) condition and proceed.
-    if(length(m_score) != 0){
-      if(m_score < minMscore){
-        minMscore <- m_score
-        refRunIdx <- runIdx
-      }
+      dplyr::filter(transition_group_id == analyte & m_score==min(m_score) ) 
+    ## Check to see if there are still more than one peak group per peptide option.
+    ## If there is then do a second pass filter for the lowest peakgroup rank
+    if ( dim(m_score)[1]>1 ){
+    m_score %>%
+        dplyr::filter(transition_group_id == analyte & peak_group_rank==min(peak_group_rank) ) -> m_score
     }
+    ## Extract on the m_score
+    m_score %>%
+    dplyr::ungroup() %>% .$m_score -> m_score
+    # Check for numeric(0) condition and proceed.
+    tryCatch(
+      expr = {
+        if(length(m_score) != 0){
+          if(m_score < minMscore){
+            minMscore <- m_score
+            refRunIdx <- runIdx
+          }
+        }
+      }, 
+      error = function(e){
+        message( sprintf("[DIAlignR::utils::getRefRun] There was an error that occured during reference run index extraction.\n%s", e$message))
+      }
+    )
+    
   }
+  ## Return refRunIdx
   refRunIdx
 }
 
