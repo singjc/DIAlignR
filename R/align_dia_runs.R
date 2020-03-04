@@ -67,7 +67,7 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
                               dotProdThresh = 0.96, gapQuantile = 0.5,
                               hardConstrain = FALSE, samples4gradient = 100,
                               samplingTime = 3.4,  RSEdistFactor = 3.5, saveFiles = FALSE,
-                              mzPntrs = NULL){
+                              identifying = FALSE, identifying.transitionPEPfilter=0.6, mzPntrs = NULL){
   
   if ( F ){
     library(DIAlignR)
@@ -126,7 +126,8 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
   
   ######### Get Precursors from the query and respectve chromatogram indices. ######
   oswFiles <- getOswFiles(dataPath, filenames,  maxFdrQuery = maxFdrQuery, analyteFDR = analyteFDR,
-                          oswMerged = oswMerged, analytes = NULL, runType = runType, analyteInGroupLabel = analyteInGroupLabel, mzPntrs = mzPntrs)
+                          oswMerged = oswMerged, analytes = NULL, runType = runType, analyteInGroupLabel = analyteInGroupLabel, 
+                          identifying = identifying, identifying.transitionPEPfilter=identifying.transitionPEPfilter, mzPntrs = mzPntrs)
   
   refAnalytes <- getAnalytesName(oswFiles, analyteFDR, commonAnalytes = FALSE)
   if(!is.null(analytes)){

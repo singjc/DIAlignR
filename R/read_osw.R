@@ -47,7 +47,7 @@
 #' @importFrom tictoc tic toc
 fetchAnalytesInfo <- function(oswName, maxFdrQuery, oswMerged,
                               analytes, filename, runType, analyteInGroupLabel = FALSE,
-                              identifying = FALSE){
+                              identifying = FALSE, identifying.transitionPEPfilter=0.6){
   
   # Establish a connection of SQLite file.
   con <- DBI::dbConnect(RSQLite::SQLite(), dbname = oswName)
@@ -62,42 +62,42 @@ fetchAnalytesInfo <- function(oswName, maxFdrQuery, oswMerged,
   query <- getQuery(maxFdrQuery, oswMerged, analytes = analytes,
                     filename = filename, runType = runType,
                     analyteInGroupLabel = analyteInGroupLabel,
-                    identifying = identifying)
+                    identifying = identifying, identifying.transitionPEPfilter=identifying.transitionPEPfilter)
   # Run query to get peptides, their coordinates and scores.
   tictoc::tic()
   analytesInfo <- tryCatch(expr = DBI::dbGetQuery(con, statement =  query ),
                            finally = DBI::dbDisconnect(con))
   ## Second pass filter to ensure only one analyte is being mapped once to the same peak
   ## There are cases for ipf where different assays would result in the same peptide being mapped to the same peak multiple times due to being the winning hypothesis
-  analytesInfo$RT_Floored <- floor(analytesInfo$RT)
-
-  analytesInfo %>%
-    dplyr::group_by( transition_group_id, filename, RT_Floored  ) %>%
-    dplyr::add_count() %>%
-    dplyr::ungroup() -> analytesInfo
-  analytesInfo %>%
-    dplyr::group_by( transition_group_id, filename, RT_Floored ) %>%
-    dplyr::filter( ifelse( n>6, ifelse(m_score==min(m_score), T, F), T ) ) -> analytesInfo
-  analytesInfo$n <- NULL
-  analytesInfo %>%
-    dplyr::group_by( transition_group_id, filename, peak_group_rank  ) %>%
-    dplyr::add_count() %>%
-    dplyr::ungroup() -> analytesInfo
-  
-  analytesInfo %>%
-    dplyr::group_by( transition_group_id, filename, peak_group_rank  ) %>%
-    dplyr::filter( ifelse( n>6, ifelse(m_score==min(m_score), T, F), T ) ) -> analytesInfo
-  
-  analytesInfo$n <- NULL
-  analytesInfo %>%
-    dplyr::group_by( transition_group_id, filename  ) %>%
-    dplyr::add_count() %>%
-    dplyr::ungroup() -> analytesInfo
-  
-  
-  
-  analytesInfo$RT_Floored <- NULL
-  analytesInfo$n <- NULL
+  # analytesInfo$RT_Floored <- floor(analytesInfo$RT)
+  # 
+  # analytesInfo %>%
+  #   dplyr::group_by( transition_group_id, filename, RT_Floored  ) %>%
+  #   dplyr::add_count() %>%
+  #   dplyr::ungroup() -> analytesInfo
+  # analytesInfo %>%
+  #   dplyr::group_by( transition_group_id, filename, RT_Floored ) %>%
+  #   dplyr::filter( ifelse( n>6, ifelse(m_score==min(m_score), T, F), T ) ) -> analytesInfo
+  # analytesInfo$n <- NULL
+  # analytesInfo %>%
+  #   dplyr::group_by( transition_group_id, filename, peak_group_rank  ) %>%
+  #   dplyr::add_count() %>%
+  #   dplyr::ungroup() -> analytesInfo
+  # 
+  # analytesInfo %>%
+  #   dplyr::group_by( transition_group_id, filename, peak_group_rank  ) %>%
+  #   dplyr::filter( ifelse( n>6, ifelse(m_score==min(m_score), T, F), T ) ) -> analytesInfo
+  # 
+  # analytesInfo$n <- NULL
+  # analytesInfo %>%
+  #   dplyr::group_by( transition_group_id, filename  ) %>%
+  #   dplyr::add_count() %>%
+  #   dplyr::ungroup() -> analytesInfo
+  # 
+  # 
+  # 
+  # analytesInfo$RT_Floored <- NULL
+  # analytesInfo$n <- NULL
   exec_time <- tictoc::toc(quiet = TRUE)
   message( sprintf("[DIAlignR::fetchAnalytesInfo(R#67)] Extracting analyte feature information for %s took %s seconds", basename(filename), round(exec_time$toc - exec_time$tic, 3) ))
   
@@ -142,7 +142,8 @@ fetchAnalytesInfo <- function(oswName, maxFdrQuery, oswMerged,
 #' oswFiles[["run0"]][1,]
 #' @export
 getOswAnalytes <- function(dataPath, filenames, oswMerged = TRUE, analyteInGroupLabel = FALSE,
-                           maxFdrQuery = 0.05, runType  = "DIA_proteomics"){
+                           maxFdrQuery = 0.05, runType  = "DIA_proteomics",
+                           identifying = FALSE, identifying.transitionPEPfilter=0.6){
   oswFiles <- list()
   for(i in 1:nrow(filenames)){
     # Get a query to search against the osw files.
@@ -157,7 +158,8 @@ getOswAnalytes <- function(dataPath, filenames, oswMerged = TRUE, analyteInGroup
     # Generate a query.
     query <- getAnalytesQuery(maxFdrQuery = maxFdrQuery, oswMerged = oswMerged,
                       filename = filenames$filename[i], runType = runType,
-                      analyteInGroupLabel = analyteInGroupLabel)
+                      analyteInGroupLabel = analyteInGroupLabel,
+                      identifying = identifying, identifying.transitionPEPfilter=identifying.transitionPEPfilter)
     # Run query to get peptides, their coordinates and scores.
     oswAnalytes <- tryCatch(expr = DBI::dbGetQuery(con, statement = query),
                              finally = DBI::dbDisconnect(con))

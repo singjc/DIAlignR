@@ -70,7 +70,7 @@ getAnalytesName <- function(oswFiles, analyteFDR = 1.00, commonAnalytes = TRUE){
 #' @export
 getAnalytes <- function(dataPath, runs = NULL, oswMerged = TRUE, runType = "DIA_Proteomics",
                         commonAnalytes = FALSE, maxFdrQuery = 0.05, nameCutPattern = "(.*)(/)(.*)",
-                        analyteInGroupLabel = FALSE){
+                        analyteInGroupLabel = FALSE, identifying = FALSE, identifying.transitionPEPfilter=0.6){
   # Get filenames from .merged.osw file and check if names are consistent between osw and mzML files.
   filenames <- getRunNames(dataPath, oswMerged, nameCutPattern)
   if(!is.null(runs)){
@@ -84,7 +84,8 @@ getAnalytes <- function(dataPath, runs = NULL, oswMerged = TRUE, runType = "DIA_
   # Get Precursors from the query and respective chromatogram indices.
   oswFiles <- getOswAnalytes(dataPath = dataPath, filenames = filenames, oswMerged = oswMerged,
                              maxFdrQuery = maxFdrQuery, runType = runType,
-                             analyteInGroupLabel = analyteInGroupLabel)
+                             analyteInGroupLabel = analyteInGroupLabel,
+                             identifying = identifying, identifying.transitionPEPfilter=identifying.transitionPEPfilter)
   analytes <- getAnalytesName(oswFiles, analyteFDR = maxFdrQuery, commonAnalytes = commonAnalytes)
   message(length(analytes), " analytes are found.")
   analytes

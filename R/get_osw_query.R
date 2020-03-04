@@ -16,7 +16,7 @@
 #' @return SQL query to be searched.
 getQuery <- function(maxFdrQuery, oswMerged = TRUE, analytes = NULL,
                      filename = NULL, runType = "DIA_Proteomics", analyteInGroupLabel = FALSE,
-		     identifying=FALSE
+		     identifying=FALSE, identifying.transitionPEPfilter=0.6
 		    ){
   if(is.null(analytes)){
     selectAnalytes <- ""
@@ -88,7 +88,11 @@ getQuery <- function(maxFdrQuery, oswMerged = TRUE, analytes = NULL,
   LEFT JOIN FEATURE_MS2 ON FEATURE_MS2.FEATURE_ID = FEATURE.ID
   ORDER BY transition_group_id;")
   } else if ( runType=="DIA_Proteomics_ipf" ) {
-
+    if ( identifying ){
+      identifying_transition_filter_query <- sprintf("AND SCORE_TRANSITION.PEP < %s", identifying.transitionPEPfilter)
+    } else {
+      identifying_transition_filter_query <- ''
+    }
     query <- sprintf(
       "
       SELECT 
@@ -105,6 +109,9 @@ getQuery <- function(maxFdrQuery, oswMerged = TRUE, analytes = NULL,
       SCORE_MS2.RANK AS peak_group_rank,
       SCORE_IPF.QVALUE AS m_score,
       TRANSITION.ID AS transition_id,
+      SCORE_TRANSITION.FEATURE_ID AS score_transition_feature_id,
+      SCORE_TRANSITION.TRANSITION_ID AS score_transition_id,
+      SCORE_TRANSITION.PEP AS transition_pep,
       TRANSITION.DETECTING AS detecting_transitions,
       TRANSITION.IDENTIFYING AS identifying_transitions
       FROM SCORE_IPF
@@ -119,8 +126,10 @@ getQuery <- function(maxFdrQuery, oswMerged = TRUE, analytes = NULL,
 	    INNER JOIN PRECURSOR ON PRECURSOR.ID = TRANSITION_PRECURSOR_MAPPING.PRECURSOR_ID
 	    INNER JOIN PRECURSOR_PEPTIDE_MAPPING ON PRECURSOR_PEPTIDE_MAPPING.PRECURSOR_ID = PRECURSOR.ID
 		  INNER JOIN PEPTIDE AS PEPTIDE_ON_PREC ON PEPTIDE_ON_PREC.ID = PRECURSOR_PEPTIDE_MAPPING.PEPTIDE_ID
+		  INNER JOIN SCORE_TRANSITION ON (SCORE_TRANSITION.TRANSITION_ID = TRANSITION.ID AND SCORE_TRANSITION.FEATURE_ID = FEATURE.ID)
       WHERE SCORE_IPF.QVALUE = SCORE_IPF_MIN.MIN_QVALUE
       AND SCORE_IPF.QVALUE < %s
+      %s --- #identifying_transition_filter_query
       %s --- #selectAnalytes
       %s --- #matchFilename
       AND (
@@ -128,7 +137,7 @@ getQuery <- function(maxFdrQuery, oswMerged = TRUE, analytes = NULL,
       OR TRANSITION.IDENTIFYING=%s --- #identifying
           ) ORDER BY transition_group_id,
       peak_group_rank;
-      ", transition_group_id, maxFdrQuery, selectAnalytes, matchFilename, identifying
+      ", transition_group_id, maxFdrQuery, identifying_transition_filter_query, selectAnalytes, matchFilename, identifying
     )
     
   } else{
@@ -180,7 +189,8 @@ getQuery <- function(maxFdrQuery, oswMerged = TRUE, analytes = NULL,
 #' @return SQL query to be searched.
 #' @seealso \code{\link{getOswAnalytes}}
 getAnalytesQuery <- function(maxFdrQuery, oswMerged = TRUE, filename = NULL,
-                             runType = "DIA_Proteomics", analyteInGroupLabel = FALSE){
+                             runType = "DIA_Proteomics", analyteInGroupLabel = FALSE,
+                             identifying=FALSE, identifying.transitionPEPfilter=0.6){
   if(oswMerged){
     matchFilename <- paste0(" AND RUN.FILENAME ='", filename,"'")
   } else{
