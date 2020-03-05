@@ -89,7 +89,7 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
    hardConstrain = FALSE; samples4gradient = 100;
    samplingTime = 3.4;  RSEdistFactor = 3.5; saveFiles = FALSE;
    mzPntrs = NULL
-   identifying=FALSE
+   identifying=TRUE
    i=4
    analyteFDR = 1
    analyte <- "RPS(Phospho)QPLNTLSPK(Label:13C(6)15N(2))_3"

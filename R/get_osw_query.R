@@ -109,9 +109,9 @@ getQuery <- function(maxFdrQuery, oswMerged = TRUE, analytes = NULL,
       SCORE_MS2.RANK AS peak_group_rank,
       SCORE_IPF.QVALUE AS m_score,
       TRANSITION.ID AS transition_id,
-      SCORE_TRANSITION.FEATURE_ID AS score_transition_feature_id,
-      SCORE_TRANSITION.TRANSITION_ID AS score_transition_id,
-      SCORE_TRANSITION.PEP AS transition_pep,
+      --SCORE_TRANSITION.FEATURE_ID AS score_transition_feature_id,
+      --SCORE_TRANSITION.TRANSITION_ID AS score_transition_id,
+      --SCORE_TRANSITION.PEP AS transition_pep,
       TRANSITION.DETECTING AS detecting_transitions,
       TRANSITION.IDENTIFYING AS identifying_transitions
       FROM SCORE_IPF
