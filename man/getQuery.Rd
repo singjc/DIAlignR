@@ -11,7 +11,8 @@ getQuery(
   filename = NULL,
   runType = "DIA_Proteomics",
   analyteInGroupLabel = FALSE,
-  identifying = FALSE
+  identifying = FALSE,
+  identifying.transitionPEPfilter = 0.6
 )
 }
 \arguments{

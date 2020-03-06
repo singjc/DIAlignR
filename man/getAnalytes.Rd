@@ -12,7 +12,9 @@ getAnalytes(
   commonAnalytes = FALSE,
   maxFdrQuery = 0.05,
   nameCutPattern = "(.*)(/)(.*)",
-  analyteInGroupLabel = FALSE
+  analyteInGroupLabel = FALSE,
+  identifying = FALSE,
+  identifying.transitionPEPfilter = 0.6
 )
 }
 \arguments{

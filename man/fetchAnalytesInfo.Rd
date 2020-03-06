@@ -12,7 +12,8 @@ fetchAnalytesInfo(
   filename,
   runType,
   analyteInGroupLabel = FALSE,
-  identifying = FALSE
+  identifying = FALSE,
+  identifying.transitionPEPfilter = 0.6
 )
 }
 \arguments{

@@ -33,6 +33,8 @@ alignTargetedRuns(
   samplingTime = 3.4,
   RSEdistFactor = 3.5,
   saveFiles = FALSE,
+  identifying = FALSE,
+  identifying.transitionPEPfilter = 0.6,
   mzPntrs = NULL
 )
 }

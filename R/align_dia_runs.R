@@ -74,6 +74,7 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
     library(dplyr)
     library(zoo)
    dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/lower_product_mz_threshold/DIAlignR_Analysis/data"
+   dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/George_lib_repeat2/DIAlignR_Analysis/data"
    alignType = "hybrid"; analyteInGroupLabel = FALSE; oswMerged = TRUE;
    runs = NULL; analytes = NULL; nameCutPattern = "(.*)(/)(.*)";
    # runs <- c('chludwig_K150309_007b_SW_1_6', 'chludwig_K150309_008_SW_1_4', 'chludwig_K150309_009_SW_1_3', 'chludwig_K150309_010_SW_1_2', 'chludwig_K150309_011_SW_1_1point5', 'chludwig_K150309_012_SW_1_1', 'chludwig_K150309_013_SW_0')
@@ -90,6 +91,7 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
    samplingTime = 3.4;  RSEdistFactor = 3.5; saveFiles = FALSE;
    mzPntrs = NULL
    identifying=TRUE
+   identifying.transitionPEPfilter=0.6
    i=4
    analyteFDR = 1
    analyte <- "RPS(Phospho)QPLNTLSPK(Label:13C(6)15N(2))_3"
