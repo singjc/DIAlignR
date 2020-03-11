@@ -4,7 +4,12 @@
 \alias{getRunNames}
 \title{Get names of all runs}
 \usage{
-getRunNames(dataPath, oswMerged = TRUE, nameCutPattern = "(.*)(/)(.*)")
+getRunNames(
+  dataPath,
+  oswMerged = TRUE,
+  nameCutPattern = "(.*)(/)(.*)",
+  chrom_ext = ".chrom.mzML"
+)
 }
 \arguments{
 \item{dataPath}{(char) Path to mzml and osw directory.}
@@ -12,6 +17,8 @@ getRunNames(dataPath, oswMerged = TRUE, nameCutPattern = "(.*)(/)(.*)")
 \item{oswMerged}{(logical) TRUE for experiment-wide FDR and FALSE for run-specific FDR by pyprophet.}
 
 \item{nameCutPattern}{(string) regex expression to fetch mzML file name from RUN.FILENAME columns of osw files.}
+
+\item{chrom_ext}{(char) Extension to search for chromatogram files in data directory. (Default: ".chrom.mzML")}
 }
 \value{
 (dataframe) it has two columns:

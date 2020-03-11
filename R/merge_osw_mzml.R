@@ -45,8 +45,11 @@ mergeOswAnalytes_ChromHeader <- function(oswAnalytes, chromHead, analyteFDR =  1
   assign("oswAnalytes", dplyr::left_join(oswAnalytes, chromHead,
                                   by = c("transition_id" = "chromatogramId")) %>%
     dplyr::group_by(transition_group_id, peak_group_rank, RT) %>%
-    dplyr::mutate(transition_ids = paste0(transition_id, collapse = ","),
-                  chromatogramIndex = paste0(chromatogramIndex, collapse = ",")) %>%
+    dplyr::mutate(detecting_transitions = paste0(detecting_transitions, collapse = ","),
+                  identifying_transitions = paste0(identifying_transitions, collapse = ","),
+                  transition_ids = paste0(transition_id, collapse = ","),
+                  chromatogramIndex = paste0(chromatogramIndex, collapse = ","),
+                  product_mz = paste0(product_mz, collapse = ",") ) %>%
     dplyr::ungroup() %>% dplyr::select(-transition_id) %>% dplyr::distinct(),
     envir = parent.frame(n = 1))
   invisible(NULL)
@@ -115,10 +118,12 @@ getOswFiles <- function(dataPath, filenames, maxFdrQuery = 0.05, analyteFDR = 0.
     
     # Get transition indices for MS2 fragment-ions.
     oswAnalytes <- fetchAnalytesInfo(oswName, maxFdrQuery, oswMerged, analytes = analytes,
-                                     filename = filenames$filename[i], runType, analyteInGroupLabel, identifying = identifying, identifying.transitionPEPfilter=identifying.transitionPEPfilter)
+                                     filename = filenames$filename[i], runType, analyteInGroupLabel, 
+                                     identifying = identifying, identifying.transitionPEPfilter=identifying.transitionPEPfilter)
 
     # Get chromatogram indices from the header file.
     if(is.null(mzPntrs)){
+      ## TODO Fix this for sqMass giles
       mzmlName <- file.path(dataPath, "mzml", paste0(filenames$runs[i], ".chrom.mzML"))
       chromHead <- readChromatogramHeader(mzmlName)
     } else{

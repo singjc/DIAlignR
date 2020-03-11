@@ -6,7 +6,7 @@
 #' @importFrom tictoc tic toc
 #' 
 #' @export
-getmzPntrs <- function( dataPath  ){
+getmzPntrs <- function( dataPath, runs  ){
   
   ## TODO: Make this more versatile or something
   ##*******************************
@@ -20,8 +20,8 @@ getmzPntrs <- function( dataPath  ){
   ## Get filenames from osw files and check if names are consistent between osw and mzML files. ######
   filenames <- DIAlignR::getRunNames( dataPath, oswMerged=TRUE)
   # runs <- c(input$Reference, gsub('...........$', '', input$ChromatogramFile[,'name']))
-  # filenames <- filenames[filenames$runs %in% runs,]
-  filenames <- filenames[grepl(paste(filenames$runs, collapse = "|"), names(global$chromFile)),]
+  filenames <- filenames[filenames$runs %in% runs,]
+  #filenames <- filenames[grepl(paste(filenames$runs, collapse = "|"), names(global$chromFile)),]
   tictoc::tic('Pre-Loading mzML Chromatogram Files onto disk')
   mzPntrs <- list()
   for ( chromatogram_input_index_num in seq(1, length(filenames$runs)) ){

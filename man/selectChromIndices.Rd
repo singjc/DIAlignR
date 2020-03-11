@@ -4,7 +4,14 @@
 \alias{selectChromIndices}
 \title{Chromatogram indices of analyte in a run.}
 \usage{
-selectChromIndices(oswFiles, runname, analyte)
+selectChromIndices(
+  oswFiles,
+  runname,
+  analyte,
+  product_mz_filter_list = NULL,
+  return_index = "chromatogramIndex",
+  keep_all_detecting = T
+)
 }
 \arguments{
 \item{oswFiles}{(list of data-frames) it is the output from getOswFiles function.}

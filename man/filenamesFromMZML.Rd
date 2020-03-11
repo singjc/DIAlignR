@@ -4,10 +4,12 @@
 \alias{filenamesFromMZML}
 \title{Get mzML filenames from the directory.}
 \usage{
-filenamesFromMZML(dataPath)
+filenamesFromMZML(dataPath, chrom_ext = ".chrom.mzML")
 }
 \arguments{
 \item{dataPath}{(char) Path to mzml and osw directory.}
+
+\item{chrom_ext}{(char) Extension to search for chromatogram files in data directory. (Default: ".chrom.mzML")}
 }
 \value{
 A named vector.

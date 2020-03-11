@@ -67,37 +67,51 @@ fetchAnalytesInfo <- function(oswName, maxFdrQuery, oswMerged,
   tictoc::tic()
   analytesInfo <- tryCatch(expr = DBI::dbGetQuery(con, statement =  query ),
                            finally = DBI::dbDisconnect(con))
-  ## Second pass filter to ensure only one analyte is being mapped once to the same peak
-  ## There are cases for ipf where different assays would result in the same peptide being mapped to the same peak multiple times due to being the winning hypothesis
-  # analytesInfo$RT_Floored <- floor(analytesInfo$RT)
-  # 
-  # analytesInfo %>%
-  #   dplyr::group_by( transition_group_id, filename, RT_Floored  ) %>%
-  #   dplyr::add_count() %>%
-  #   dplyr::ungroup() -> analytesInfo
-  # analytesInfo %>%
-  #   dplyr::group_by( transition_group_id, filename, RT_Floored ) %>%
-  #   dplyr::filter( ifelse( n>6, ifelse(m_score==min(m_score), T, F), T ) ) -> analytesInfo
-  # analytesInfo$n <- NULL
-  # analytesInfo %>%
-  #   dplyr::group_by( transition_group_id, filename, peak_group_rank  ) %>%
-  #   dplyr::add_count() %>%
-  #   dplyr::ungroup() -> analytesInfo
-  # 
-  # analytesInfo %>%
-  #   dplyr::group_by( transition_group_id, filename, peak_group_rank  ) %>%
-  #   dplyr::filter( ifelse( n>6, ifelse(m_score==min(m_score), T, F), T ) ) -> analytesInfo
-  # 
-  # analytesInfo$n <- NULL
-  # analytesInfo %>%
-  #   dplyr::group_by( transition_group_id, filename  ) %>%
-  #   dplyr::add_count() %>%
-  #   dplyr::ungroup() -> analytesInfo
-  # 
-  # 
-  # 
-  # analytesInfo$RT_Floored <- NULL
-  # analytesInfo$n <- NULL
+  
+  if ( F ){
+    analytesInfo %>% dplyr::filter( transition_group_id == analyte) -> tmp
+  }
+  # Second pass filter to ensure only one analyte is being mapped once to the same peak
+  # There are cases for ipf where different assays would result in the same peptide being mapped to the same peak multiple times due to being the winning hypothesis
+  analytesInfo$RT_Floored <- floor(analytesInfo$RT)
+
+  analytesInfo %>%
+    dplyr::group_by( transition_group_id, filename, RT_Floored  ) %>%
+    dplyr::add_count() %>%
+    dplyr::ungroup() -> analytesInfo
+  analytesInfo %>%
+    dplyr::group_by( transition_group_id, filename, RT_Floored ) %>%
+    dplyr::filter( ifelse( n>6, ifelse(m_score==min(m_score), T, F), T ) ) -> analytesInfo ### TODO: If I include identifying transitions, n will always be > 6
+  analytesInfo$n <- NULL
+  analytesInfo %>%
+    dplyr::group_by( transition_group_id, filename, peak_group_rank  ) %>%
+    dplyr::add_count() %>%
+    dplyr::ungroup() -> analytesInfo
+
+  analytesInfo %>%
+    dplyr::group_by( transition_group_id, filename, peak_group_rank  ) %>%
+    dplyr::filter( ifelse( n>6, ifelse(m_score==min(m_score), T, F), T ) ) %>%
+    dplyr::ungroup()-> analytesInfo
+  
+  analytesInfo$n <- NULL
+  
+  analytesInfo %>% dplyr::select( -product_mz, -transition_id, -detecting_transitions, -identifying_transitions) %>% unique() -> unique_analytesInfo
+
+  unique_analytesInfo %>% group_by( transition_group_id, filename, RT_Floored ) %>% dplyr::slice( -1 ) %>% dplyr::ungroup() %>% dplyr::select( feature_id ) -> remove_features_list
+  
+  analytesInfo %>%
+    dplyr::filter( !(feature_id %in% remove_features_list$feature_id) ) -> analytesInfo
+  
+  analytesInfo %>%
+    dplyr::group_by( transition_group_id, filename, RT_Floored ) %>%
+    dplyr::add_count() %>%
+    dplyr::ungroup() -> analytesInfo
+
+
+  analytesInfo$RT_Floored <- NULL
+  analytesInfo$n <- NULL
+  ## Convert ids to character
+  class(analytesInfo$transition_id) <- as.character()
   exec_time <- tictoc::toc(quiet = TRUE)
   message( sprintf("[DIAlignR::fetchAnalytesInfo(R#67)] Extracting analyte feature information for %s took %s seconds", basename(filename), round(exec_time$toc - exec_time$tic, 3) ))
   

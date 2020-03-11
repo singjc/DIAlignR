@@ -4,7 +4,7 @@
 \alias{getmzPntrs}
 \title{Get a list of mz Objects}
 \usage{
-getmzPntrs(dataPath)
+getmzPntrs(dataPath, runs)
 }
 \arguments{
 \item{input}{A shiny input variable that contains Working Directory Information}

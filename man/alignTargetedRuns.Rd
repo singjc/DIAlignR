@@ -12,6 +12,7 @@ alignTargetedRuns(
   runs = NULL,
   analytes = NULL,
   nameCutPattern = "(.*)(/)(.*)",
+  chrom_ext = ".chrom.mzML",
   maxFdrQuery = 0.05,
   maxFdrLoess = 0.01,
   analyteFDR = 0.01,
@@ -35,6 +36,7 @@ alignTargetedRuns(
   saveFiles = FALSE,
   identifying = FALSE,
   identifying.transitionPEPfilter = 0.6,
+  keep_all_detecting = TRUE,
   mzPntrs = NULL
 )
 }
@@ -52,6 +54,8 @@ alignTargetedRuns(
 \item{analytes}{(vector of strings) transition_group_ids for which features are to be extracted. analyteInGroupLabel must be set according the pattern used here.}
 
 \item{nameCutPattern}{(string) regex expression to fetch mzML file name from RUN.FILENAME columns of osw files.}
+
+\item{chrom_ext}{(char) Extension to search for chromatogram files in data directory. (Default: ".chrom.mzML")}
 
 \item{maxFdrQuery}{(numeric) A numeric value between 0 and 1. It is used to filter features from osw file which have SCORE_MS2.QVALUE less than itself.}
 

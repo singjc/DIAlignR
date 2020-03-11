@@ -19,6 +19,7 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("transition_group_id", "
 #' @param runs (A vector of string) Names of mzml file without extension.
 #' @param analytes (vector of strings) transition_group_ids for which features are to be extracted. analyteInGroupLabel must be set according the pattern used here.
 #' @param nameCutPattern (string) regex expression to fetch mzML file name from RUN.FILENAME columns of osw files.
+#' @param chrom_ext (char) Extension to search for chromatogram files in data directory. (Default: ".chrom.mzML")
 #' @param maxFdrQuery (numeric) A numeric value between 0 and 1. It is used to filter features from osw file which have SCORE_MS2.QVALUE less than itself.
 #' @param maxFdrLoess (numeric) A numeric value between 0 and 1. Features should have m-score lower than this value for participation in LOESS fit.
 #' @param analyteFDR (numeric) only analytes that have m-score less than this, will be included in the output.
@@ -57,7 +58,7 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("transition_group_id", "
 #'
 #' @export
 alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabel = FALSE, oswMerged = TRUE,
-                              runs = NULL, analytes = NULL, nameCutPattern = "(.*)(/)(.*)",
+                              runs = NULL, analytes = NULL, nameCutPattern = "(.*)(/)(.*)", chrom_ext=".chrom.mzML",
                               maxFdrQuery = 0.05, maxFdrLoess = 0.01, analyteFDR = 0.01,
                               spanvalue = 0.1, runType = "DIA_Proteomics",
                               normalization = "mean", simMeasure = "dotProductMasked",
@@ -67,35 +68,53 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
                               dotProdThresh = 0.96, gapQuantile = 0.5,
                               hardConstrain = FALSE, samples4gradient = 100,
                               samplingTime = 3.4,  RSEdistFactor = 3.5, saveFiles = FALSE,
-                              identifying = FALSE, identifying.transitionPEPfilter=0.6, mzPntrs = NULL){
+                              identifying = FALSE, identifying.transitionPEPfilter=0.6, keep_all_detecting=TRUE, mzPntrs = NULL){
   
   if ( F ){
     library(DIAlignR)
+    library(mstools)
     library(dplyr)
     library(zoo)
-   dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/lower_product_mz_threshold/DIAlignR_Analysis/data"
-   dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/George_lib_repeat2/DIAlignR_Analysis/data"
-   alignType = "hybrid"; analyteInGroupLabel = FALSE; oswMerged = TRUE;
-   runs = NULL; analytes = NULL; nameCutPattern = "(.*)(/)(.*)";
-   # runs <- c('chludwig_K150309_007b_SW_1_6', 'chludwig_K150309_008_SW_1_4', 'chludwig_K150309_009_SW_1_3', 'chludwig_K150309_010_SW_1_2', 'chludwig_K150309_011_SW_1_1point5', 'chludwig_K150309_012_SW_1_1', 'chludwig_K150309_013_SW_0')
-   maxFdrQuery = 0.05; maxFdrLoess = 0.01; analyteFDR = 0.01;
-   spanvalue = 1; 
-   # runType = "DIA_Proteomics";
-   runType = "DIA_Proteomics_ipf"
-   normalization = "mean"; simMeasure = "dotProductMasked";
-   XICfilter = "sgolay"; SgolayFiltOrd = 4; SgolayFiltLen = 9;
-   goFactor = 0.125; geFactor = 40;
-   cosAngleThresh = 0.3; OverlapAlignment = TRUE;
-   dotProdThresh = 0.96; gapQuantile = 0.5;
-   hardConstrain = FALSE; samples4gradient = 100;
-   samplingTime = 3.4;  RSEdistFactor = 3.5; saveFiles = FALSE;
-   mzPntrs = NULL
-   identifying=TRUE
-   identifying.transitionPEPfilter=0.6
-   i=4
-   analyteFDR = 1
-   analyte <- "RPS(Phospho)QPLNTLSPK(Label:13C(6)15N(2))_3"
-   eXp <- "run1"
+    # dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/lower_product_mz_threshold/DIAlignR_Analysis/data"
+    dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/George_lib_repeat2/DIAlignR_Analysis/data/"
+    alignType = "hybrid"; analyteInGroupLabel = FALSE; oswMerged = TRUE;
+    runs = NULL; analytes = NULL; nameCutPattern = "(.*)(/)(.*)"; chrom_ext=".chrom.sqMass"
+    # runs <- c('chludwig_K150309_007b_SW_1_6', 'chludwig_K150309_008_SW_1_4', 'chludwig_K150309_009_SW_1_3', 'chludwig_K150309_010_SW_1_2', 'chludwig_K150309_011_SW_1_1point5', 'chludwig_K150309_012_SW_1_1', 'chludwig_K150309_013_SW_0')
+    # runs =  c("chludwig_K150309_013_SW_0", "chludwig_K150309_012_SW_1_1")
+    maxFdrQuery = 0.05; maxFdrLoess = 0.01; analyteFDR = 0.01;
+    spanvalue = 1; 
+    # runType = "DIA_Proteomics";
+    runType = "DIA_Proteomics_ipf"
+    normalization = "mean"; simMeasure = "dotProductMasked";
+    XICfilter = "sgolay"; SgolayFiltOrd = 4; SgolayFiltLen = 9;
+    goFactor = 0.125; geFactor = 40;
+    cosAngleThresh = 0.3; OverlapAlignment = TRUE;
+    dotProdThresh = 0.96; gapQuantile = 0.5;
+    hardConstrain = FALSE; samples4gradient = 100;
+    samplingTime = 3.4;  RSEdistFactor = 3.5; saveFiles = FALSE;
+    mzPntrs = NULL
+    identifying=T
+    identifying.transitionPEPfilter=0.6
+    keep_all_detecting=T
+    i=4
+    analyteFDR = 1
+    analyte <- "AGLDNVDAES(Phospho)K(Label:13C(6)15N(2))_2" # Apparently belongs to two peaks
+    eXp <- "run11"
+    analyte <- "AKNS(Phospho)PEPNEFLR(Label:13C(6)15N(4))_2"
+    eXp <- "run5"
+    analyte <- "RGS(Phospho)VYHVPLNIVQADAVR(Label:13C(6)15N(4))_3"
+    eXp <- "run2"
+    analyte <- "DASASS(Phospho)TSTFDAR(Label:13C(6)15N(4))_2"
+    ref <- "run12"
+    eXp <- "run5"
+    analyte <- "RSMS(Phospho)LLGYR(Label:13C(6)15N(4))_2"
+    ref <- "run11"
+    eXp <- "run0"
+    analyte <- "GS(Phospho)VYHVPLNPVQATAVR(Label:13C(6)15N(4))_3"
+    ref <- "run11"
+    eXp <- "run7"
+    maxFdrQuery=0.5
+    maxFdrLoess=0.05
   }
   
   # Check if filter length is odd for Savitzky-Golay filter.
@@ -104,7 +123,7 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
   }
   
   # Get filenames from .merged.osw file and check if names are consistent between osw and mzML files.
-  filenames <- getRunNames(dataPath, oswMerged, nameCutPattern)
+  filenames <- getRunNames(dataPath, oswMerged, nameCutPattern, chrom_ext=chrom_ext)
   if(!is.null(runs)){
     filenames <- filenames[filenames$runs %in% runs,]
     missingRun <- setdiff(runs, filenames$runs)
@@ -115,21 +134,40 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
   message("Following runs will be aligned:")
   print(filenames[, "runs"], sep = "\n")
   
-  if(is.null(mzPntrs)){
-    ######### Collect pointers for each mzML file. #######
-    runs <- filenames$runs
-    names(runs) <- rownames(filenames)
-    # Collect all the pointers for each mzML file.
-    message("Collecting metadata from mzML files.")
-    # mzPntrs <- getMZMLpointers(dataPath, runs)
-    mzPntrs <- getmzPntrs(dataPath)
-    message("Metadata is collected from mzML files.")
+  ## If using mzML files, cache data
+  if ( grepl(".*mzML", chrom_ext) ){
+    if(is.null(mzPntrs)){
+      ######### Collect pointers for each mzML file. #######
+      runs <- filenames$runs
+      names(runs) <- rownames(filenames)
+      # Collect all the pointers for each mzML file.
+      message("Collecting metadata from mzML files.")
+      # mzPntrs <- getMZMLpointers(dataPath, runs)
+      mzPntrs <- getmzPntrs(dataPath, runs)
+      message("Metadata is collected from mzML files.")
+      return_index <- "chromatogramIndex"
+    }
+  } else if ( grepl(".*sqMass", chrom_ext) ){
+    if(is.null(mzPntrs)){
+      ######### Collect pointers for each mzML file. #######
+      runs <- filenames$runs
+      names(runs) <- rownames(filenames)
+      # Collect all the pointers for each mzML file.
+      message("Collecting metadata from sqMass files.")
+      # mzPntrs <- getMZMLpointers(dataPath, runs)
+      mzPntrs <- getsqMassPntrs(dataPath, runs, nameCutPattern = nameCutPattern, chrom_ext = chrom_ext)
+      message("Metadata is collected from sqMass files.")
+      return_index <- "chromatogramIndex"
+    }
   }
   
   ######### Get Precursors from the query and respectve chromatogram indices. ######
+  tictoc::tic()
   oswFiles <- getOswFiles(dataPath, filenames,  maxFdrQuery = maxFdrQuery, analyteFDR = analyteFDR,
                           oswMerged = oswMerged, analytes = NULL, runType = runType, analyteInGroupLabel = analyteInGroupLabel, 
                           identifying = identifying, identifying.transitionPEPfilter=identifying.transitionPEPfilter, mzPntrs = mzPntrs)
+  exec_time <- tictoc::toc(quiet = TRUE)
+  message( sprintf("[DIAlignR::alignTargetedruns::getOswFiles(#R170)] Extracting OSW results information for %s runs took %s seconds",dim(filenames)[1], round(exec_time$toc - exec_time$tic, 3) ))
   
   refAnalytes <- getAnalytesName(oswFiles, analyteFDR, commonAnalytes = FALSE)
   if(!is.null(analytes)){
@@ -154,13 +192,18 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
   ######### Container to save loess fits.  #######
   loessFits <- list()
   #alignedTables <- performRefAlignment(alignType, ...)
-  
   message("Performing reference-based alignment.")
   start_time <- Sys.time()
   for(analyteIdx in seq_along(refAnalytes)){
+    
     analyte <- refAnalytes[analyteIdx]
+    
+    cat("\n---------------------- START --------------------------\n")
+    cat( sprintf("analyte: %s\n", analyte) )
+    
     # Select reference run based on m-score
     refRunIdx <- getRefRun(oswFiles, analyte)
+    
     oswFiles[[refRunIdx]] %>%
       dplyr::group_by( transition_group_id ) %>%
       dplyr::filter(transition_group_id == analyte  & m_score==min(m_score)  ) %>%
@@ -178,31 +221,74 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
     ## Select useful columns
     refPeak %>%
       dplyr::select(leftWidth, RT, rightWidth, Intensity) -> refPeak
-         
-         
+    
+    ## Do a third check in case there are still more than one top feature, that happen to have the same RT, peak_group_rank and m_score
+    if ( dim(refPeak)[1] > 1 ){
+      ## TODO: there may be times when the RT is the same, but the boundaries might be slightly different. Need to account for this somehow
+      refPeak <- unique(refPeak)[1,]
+    }
+    
     # Get XIC_group from reference run. if missing, go to next analyte.
     ref <- names(runs)[refRunIdx]
     exps <- setdiff(names(runs), ref)
-    chromIndices <- selectChromIndices(oswFiles, runname = ref, analyte = analyte)
+    chromIndices <- selectChromIndices(oswFiles, runname = ref, analyte = analyte, return_index=return_index )
+    
     if(is.null(chromIndices)){
       warning("Chromatogram indices for ", analyte, " are missing in ", runs[ref])
       message("Skipping ", analyte)
       next
     } else {
+      tictoc::tic()
       XICs.ref <- extractXIC_group(mz = mzPntrs[[ref]]$mz, chromIndices = chromIndices,
                                    XICfilter = XICfilter, SgolayFiltOrd = SgolayFiltOrd,
                                    SgolayFiltLen = SgolayFiltLen)
+      ## End timer
+      exec_time <- tictoc::toc(quiet = T)
+      message(sprintf("Extracting XIC with %s traces for ref run %s: Elapsed Time = %s sec", length(chromIndices), ref, round(exec_time$toc - exec_time$tic, 3) ))
     }
     
-    cat("\n---------------------- START --------------------------\n")
-    cat( sprintf("analyte: %s\n", analyte) )
     
     # Align all runs to reference run
     for(eXp in exps){
+      
+      ## Get Overlapping product ms of identifying transitions
+      if( identifying ){
+        ## Subset list and data into data.table for current analyte
+        data.table::rbindlist(oswFiles[c(ref, eXp)]) %>% dplyr::filter( transition_group_id==analyte) -> oswFile_subset
+        
+        if ( any(grepl(paste0(".*", filenames$runs[which(rownames(filenames) %in% ref)], ".*"), oswFile_subset$filename)) & any(grepl(paste0(".*", filenames$runs[which(rownames(filenames) %in% eXp)], ".*"), oswFile_subset$filename)) ) {
+          
+          ## Get overlapping product mz checking for detecting or identifying transition overlap
+          procuct_mz_intersect <- Reduce( intersect, lapply(seq(1,dim(oswFile_subset)[1]), function(row_idx) paste( strsplit(oswFile_subset$product_mz, ",")[[row_idx]], strsplit(oswFile_subset$detecting_transitions, ",")[[row_idx]], sep="_" ) ) )
+          ## Re-Extract Reference Chrom IDs for only overlapping product mz transitions
+          ## TODO need to maybe make this non-repeptitive
+          chromIndices <- selectChromIndices(oswFiles, runname = ref, analyte = analyte, product_mz_filter_list=procuct_mz_intersect, return_index=return_index, keep_all_detecting=keep_all_detecting)
+          tictoc::tic()
+          XICs.ref <- extractXIC_group(mz = mzPntrs[[ref]]$mz, chromIndices = chromIndices,
+                                       XICfilter = XICfilter, SgolayFiltOrd = SgolayFiltOrd,
+                                       SgolayFiltLen = SgolayFiltLen)
+          ## End timer
+          exec_time <- tictoc::toc(quiet = T)
+          message(sprintf("Re-Extracting XIC with %s traces for ref run %s: Elapsed Time = %s sec", length(chromIndices), ref, round(exec_time$toc - exec_time$tic, 3) ))
+        } else {
+          ## Set procuct_mz_intersect to NULL
+          procuct_mz_intersect <- NULL
+          warning("Chromatogram indices for ", analyte, " are missing in ", runs[eXp])
+          next
+        }
+      } else {
+        ## Set procuct_mz_intersect to NULL
+        procuct_mz_intersect <- NULL
+      }
+      
       # Get XIC_group from experiment run
-      chromIndices <- selectChromIndices(oswFiles, runname = eXp, analyte = analyte)
+      chromIndices <- selectChromIndices(oswFiles, runname = eXp, analyte = analyte, product_mz_filter_list=procuct_mz_intersect, return_index=return_index, keep_all_detecting=keep_all_detecting)
       if(!is.null(chromIndices)){
+        tictoc::tic()
         XICs.eXp <- extractXIC_group(mzPntrs[[eXp]]$mz, chromIndices)
+        ## End timer
+        exec_time <- tictoc::toc(quiet = T)
+        message(sprintf("Extracting XIC with %s traces for eXp run %s: Elapsed Time = %s sec", length(chromIndices), eXp, round(exec_time$toc - exec_time$tic, 3) ))
         # Get the loess fit for hybrid alignment
         pair <- paste(ref, eXp, sep = "_")
         if(any(pair %in% names(loessFits))){
@@ -215,9 +301,6 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
         ## TODO: @Shubham, there are cases where adaptiveRT is NAN, does this affect calculations?
         adaptiveRT <- RSEdistFactor*Loess.fit$s
         
-        
-        cat( sprintf("eXp: %s\nrun: %s\ndim(XICs.ref): %s\ndim(XICs.eXp: %s\nadaptiveRT: %s\n", eXp, filenames$runs[which(rownames(filenames) %in% eXp)], paste(unlist(lapply(XICs.ref, function(x) dim(x)[1])), collapse=", "), paste(unlist(lapply(XICs.eXp, function(x) dim(x)[1])), collapse=", "), adaptiveRT) )
-        
         # Get retention time in experiment run mapped to reference run retention time.
         eXpRT <- getMappedRT(refRT = refPeak$RT, XICs.ref = XICs.ref, XICs.eXp = XICs.eXp, Loess.fit = Loess.fit, alignType = alignType, adaptiveRT = adaptiveRT, samplingTime,
                              normalization, simMeasure, goFactor, geFactor, cosAngleThresh,
@@ -225,6 +308,13 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
                              samples4gradient)
         eXp_feature <- pickNearestFeature(eXpRT, analyte, oswFiles, runname = eXp,
                                           adaptiveRT = adaptiveRT, featureFDR = 0.05)
+        
+        cat( sprintf("ref: %s\neXp: %s\nref_run: %s\neXp_run: %s\ndim(XICs.ref): %s\ndim(XICs.eXp): %s\nadaptiveRT: %s\neXpRT: %s\neXp_feature: %s\n", 
+                     ref, eXp, 
+                     filenames$runs[which(rownames(filenames) %in% ref)], filenames$runs[which(rownames(filenames) %in% eXp)], 
+                     paste(unlist(lapply(XICs.ref, function(x) dim(x)[1])), collapse=", "), paste(unlist(lapply(XICs.eXp, function(x) dim(x)[1])), collapse=", "), 
+                     adaptiveRT, eXpRT, ifelse( is.null(eXp_feature), 'NULL', eXp_feature) )  )
+        
         if(!is.null(eXp_feature)){
           # A feature is found. Use this feature for quantification.
           lwTbl[analyteIdx, eXp] <- eXp_feature[["leftWidth"]]
@@ -340,7 +430,7 @@ getAlignObjs <- function(analytes, runs, dataPath = ".", alignType = "hybrid",
                          hardConstrain = FALSE, samples4gradient = 100,
                          samplingTime = 3.4,  RSEdistFactor = 3.5, objType = "light", mzPntrs = NULL){
   
-
+  
   
   if(length(runs) != 2){
     print("For pairwise alignment, two runs are required.")
