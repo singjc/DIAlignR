@@ -316,11 +316,12 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
                      adaptiveRT, eXpRT, ifelse( is.null(eXp_feature), 'NULL', eXp_feature) )  )
         
         if(!is.null(eXp_feature)){
+	  if ( length(eXp_feature) > 1 ) warning( sprintf( "There was more than one feature found!! Taking only first feature.. %s", as.character(eXp_feature) ) )
           # A feature is found. Use this feature for quantification.
-          lwTbl[analyteIdx, eXp] <- eXp_feature[["leftWidth"]]
-          rtTbl[analyteIdx, eXp] <- eXp_feature[["RT"]]
-          rwTbl[analyteIdx, eXp] <- eXp_feature[["rightWidth"]]
-          intesityTbl[analyteIdx, eXp] <- eXp_feature[["Intensity"]]
+          lwTbl[analyteIdx, eXp] <- eXp_feature[["leftWidth"]][1]
+          rtTbl[analyteIdx, eXp] <- eXp_feature[["RT"]][1]
+          rwTbl[analyteIdx, eXp] <- eXp_feature[["rightWidth"]][1]
+          intesityTbl[analyteIdx, eXp] <- eXp_feature[["Intensity"]][1]
         } else {
           # Feature is not found.}
         }
