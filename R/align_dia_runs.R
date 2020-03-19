@@ -317,11 +317,14 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
         
         if(!is.null(eXp_feature)){
 	  if ( length(eXp_feature) > 1 ) warning( sprintf( "There was more than one feature found!! Taking only first feature.. %s", as.character(eXp_feature) ) )
+          # lowest m_score index
+          if ( any("ms2_m_score" %in% names(eXp_feature)) ){ m_score_filter_name <- "ms2_m_score" } else { m_score_filter_name <- "m_score" }
+          use_index <- which( min(eXp_feature[[m_score_filter_name]])==eXp_feature[[m_score_filter_name]] )
           # A feature is found. Use this feature for quantification.
-          lwTbl[analyteIdx, eXp] <- eXp_feature[["leftWidth"]][1]
-          rtTbl[analyteIdx, eXp] <- eXp_feature[["RT"]][1]
-          rwTbl[analyteIdx, eXp] <- eXp_feature[["rightWidth"]][1]
-          intesityTbl[analyteIdx, eXp] <- eXp_feature[["Intensity"]][1]
+          lwTbl[analyteIdx, eXp] <- eXp_feature[["leftWidth"]][use_index]
+          rtTbl[analyteIdx, eXp] <- eXp_feature[["RT"]][use_index]
+          rwTbl[analyteIdx, eXp] <- eXp_feature[["rightWidth"]][use_index]
+          intesityTbl[analyteIdx, eXp] <- eXp_feature[["Intensity"]][use_index]
         } else {
           # Feature is not found.}
         }
