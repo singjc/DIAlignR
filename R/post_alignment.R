@@ -31,11 +31,13 @@
 pickNearestFeature <- function(eXpRT, analyte, oswFiles, runname, adaptiveRT, featureFDR){
   # Fetch features for an analyte.
   df <- oswFiles[[runname]] %>% dplyr::filter(transition_group_id == analyte) %>%
-    dplyr::select(leftWidth, rightWidth, RT, Intensity, peak_group_rank, m_score)
+    dplyr::select(leftWidth, rightWidth, RT, Intensity, peak_group_rank, contains("ms2_m_score"), m_score)
   # select features which are within adaptive RT of mapped retention time.
   df <- df %>% dplyr::filter(abs(RT - eXpRT) <= adaptiveRT)
   # select highest peak_group_rank feature.
-  df <- df %>% dplyr::filter(m_score < featureFDR & peak_group_rank == min(peak_group_rank))
+  ## Check for which column is the ms2_m_score column
+  if ( any("ms2_m_score" %in% colnames(df)) ){ m_score_filter_name <- "ms2_m_score" } else { m_score_filter_name <- "m_score" }
+  df <- df %>% dplyr::filter( !!rlang::sym(m_score_filter_name) < featureFDR & peak_group_rank == min(peak_group_rank) )
   if(df %>% nrow() == 0){
     return(NULL)
   }

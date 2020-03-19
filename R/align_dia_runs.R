@@ -93,7 +93,7 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
     hardConstrain = FALSE; samples4gradient = 100;
     samplingTime = 3.4;  RSEdistFactor = 3.5; saveFiles = FALSE;
     mzPntrs = NULL
-    identifying=T
+    identifying=F
     identifying.transitionPEPfilter=0.6
     keep_all_detecting=T
     i=4
@@ -113,8 +113,8 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
     analyte <- "GS(Phospho)VYHVPLNPVQATAVR(Label:13C(6)15N(4))_3"
     ref <- "run11"
     eXp <- "run7"
-    maxFdrQuery=0.5
-    maxFdrLoess=0.05
+    maxFdrQuery=1
+    maxFdrLoess=0.01
   }
   
   # Check if filter length is odd for Savitzky-Golay filter.
