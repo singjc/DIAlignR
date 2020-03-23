@@ -146,6 +146,7 @@ getQuery <- function(maxFdrQuery, oswMerged = TRUE, analytes = NULL,
   } else{
     query <- paste0("SELECT", transition_group_id,",
   RUN.FILENAME AS filename,
+  FEATURE.ID as feature_id,
   FEATURE.EXP_RT AS RT,
   FEATURE.DELTA_RT AS delta_rt,
   PRECURSOR.LIBRARY_RT AS assay_RT,

@@ -49,7 +49,8 @@ mergeOswAnalytes_ChromHeader <- function(oswAnalytes, chromHead, analyteFDR =  1
                   identifying_transitions = paste0(identifying_transitions, collapse = ","),
                   transition_ids = paste0(transition_id, collapse = ","),
                   chromatogramIndex = paste0(chromatogramIndex, collapse = ","),
-                  product_mz = paste0(product_mz, collapse = ",") ) %>%
+                  product_mz = ifelse( tolower(runType)=="dia_proteomics_ipf", paste0(product_mz, collapse = ","), NA )
+                  ) %>%
     dplyr::ungroup() %>% dplyr::select(-transition_id) %>% dplyr::distinct(),
     envir = parent.frame(n = 1))
   invisible(NULL)

@@ -95,7 +95,7 @@ fetchAnalytesInfo <- function(oswName, maxFdrQuery, oswMerged,
   
   analytesInfo$n <- NULL
   
-  analytesInfo %>% dplyr::select( -product_mz, -transition_id, -detecting_transitions, -identifying_transitions) %>% unique() -> unique_analytesInfo
+  analytesInfo %>% dplyr::select( -contains("product_mz"), -transition_id, -detecting_transitions, -identifying_transitions) %>% unique() -> unique_analytesInfo
 
   unique_analytesInfo %>% group_by( transition_group_id, filename, RT_Floored ) %>% dplyr::slice( -1 ) %>% dplyr::ungroup() %>% dplyr::select( feature_id ) -> remove_features_list
   

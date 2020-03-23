@@ -263,6 +263,7 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
           ## Re-Extract Reference Chrom IDs for only overlapping product mz transitions
           ## TODO need to maybe make this non-repeptitive
           chromIndices <- selectChromIndices(oswFiles, runname = ref, analyte = analyte, product_mz_filter_list=procuct_mz_intersect, return_index=return_index, keep_all_detecting=keep_all_detecting)
+          chromIndices <- selectChromIndices(oswFiles, runname = ref, analyte = analyte, product_mz_filter_list=procuct_mz_intersect, return_index=return_index, keep_all_detecting=keep_all_detecting)
           tictoc::tic()
           XICs.ref <- extractXIC_group(mz = mzPntrs[[ref]]$mz, chromIndices = chromIndices,
                                        XICfilter = XICfilter, SgolayFiltOrd = SgolayFiltOrd,
@@ -298,7 +299,6 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
           loessFits[[pair]] <- Loess.fit
         }
         # Set up constraints for penalizing similarity matrix
-        ## TODO: @Shubham, there are cases where adaptiveRT is NAN, does this affect calculations?
         adaptiveRT <- RSEdistFactor*Loess.fit$s
         
         # Get retention time in experiment run mapped to reference run retention time.
