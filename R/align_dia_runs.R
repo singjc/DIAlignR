@@ -320,6 +320,7 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
           # lowest m_score index
           if ( any("ms2_m_score" %in% names(eXp_feature)) ){ m_score_filter_name <- "ms2_m_score" } else { m_score_filter_name <- "m_score" }
           use_index <- which( min(eXp_feature[[m_score_filter_name]])==eXp_feature[[m_score_filter_name]] )
+	  if ( length(use_index)>1 ) { warn("There were two eXp_features with the same m_score..); use_index <- 1 }
           # A feature is found. Use this feature for quantification.
           lwTbl[analyteIdx, eXp] <- eXp_feature[["leftWidth"]][use_index]
           rtTbl[analyteIdx, eXp] <- eXp_feature[["RT"]][use_index]
