@@ -302,7 +302,7 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
           maxFdrLoess_list <- seq(maxFdrLoess, 1, 0.05)
           i <- 1
           Loess.fit <- NULL
-          while ( is.null(Loess.fit) ) {
+          while ( is.null(Loess.fit) & i<length(maxFdrLoess_list) ) {
             maxFdrLoess_i <- maxFdrLoess_list[i]
             Loess.fit <- tryCatch(
               expr = {
@@ -316,6 +316,7 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
               }
             )
             i <- i + 1
+            ##TODO Add a stop condition, otherwise loop will for on forever
           }
           loessFits[[pair]] <- Loess.fit
         }
