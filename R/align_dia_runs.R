@@ -306,17 +306,21 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
             maxFdrLoess_i <- maxFdrLoess_list[i]
             Loess.fit <- tryCatch(
               expr = {
-                message( sprintf("Used maxFdrLoess: %s", maxFdrLoess))
-                Loess.fit <- getGlobalAlignment(oswFiles, ref, eXp, maxFdrLoess, spanvalue, fitType = "loess")
+                message( sprintf("Used maxFdrLoess: %s", maxFdrLoess_i))
+                Loess.fit <- getGlobalAlignment(oswFiles, ref, eXp, maxFdrLoess_i, spanvalue, fitType = "loess")
                 
               },
               error = function(e){
-                message(sprintf("The following error occured using maxFdrLoess %s: %s", maxFdrLoess, e$message))
+                message(sprintf("The following error occured using maxFdrLoess %s: %s", maxFdrLoess_i, e$message))
                 Loess.fit <- NULL
               }
             )
             i <- i + 1
             ##TODO Add a stop condition, otherwise loop will for on forever
+          }
+          if ( is.null(Loess.fit) ) {
+            message("Warn: Was unable to getGlobalAlignment even after permuting different maxFdrLoess thresholds...Skipping...%s", pair)
+            next
           }
           loessFits[[pair]] <- Loess.fit
         }
