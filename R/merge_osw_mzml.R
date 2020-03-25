@@ -104,7 +104,7 @@ getOswFiles <- function(dataPath, filenames, maxFdrQuery = 0.05, analyteFDR = 0.
   oswFiles <- list()
   for(i in 1:nrow(filenames)){
     run <- rownames(filenames)[i]
-    # Get a query to search against the osw files.
+   # Get a query to search against the osw files.
     if(oswMerged == TRUE){
       oswName <- list.files(path = file.path(dataPath, "osw"), pattern="*merged.osw")
       oswName <- file.path(dataPath, "osw", oswName[1])

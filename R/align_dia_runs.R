@@ -115,6 +115,9 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
     eXp <- "run7"
     maxFdrQuery=1
     maxFdrLoess=0.01
+    analyte <- "analyte: .(Acetyl)AAAAAAAGDS(Phospho)DSWDADAFSVEDPVR_3"
+    ref <- "run13"
+    eXp <- "run5"
   }
   
   # Check if filter length is odd for Savitzky-Golay filter.
@@ -239,7 +242,7 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
       next
     } else {
       tictoc::tic()
-      XICs.ref <- extractXIC_group(mz = mzPntrs[[ref]]$mz, chromIndices = chromIndices,
+      XICs.ref <- DIAlignR:::extractXIC_group(mz = mzPntrs[[ref]]$mz, chromIndices = chromIndices,
                                    XICfilter = XICfilter, SgolayFiltOrd = SgolayFiltOrd,
                                    SgolayFiltLen = SgolayFiltLen)
       ## End timer
@@ -283,10 +286,10 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
       }
       
       # Get XIC_group from experiment run
-      chromIndices <- selectChromIndices(oswFiles, runname = eXp, analyte = analyte, product_mz_filter_list=procuct_mz_intersect, return_index=return_index, keep_all_detecting=keep_all_detecting)
+      chromIndices <- DIAlignR:::selectChromIndices(oswFiles, runname = eXp, analyte = analyte, product_mz_filter_list=procuct_mz_intersect, return_index=return_index, keep_all_detecting=keep_all_detecting)
       if(!is.null(chromIndices)){
         tictoc::tic()
-        XICs.eXp <- extractXIC_group(mzPntrs[[eXp]]$mz, chromIndices)
+        XICs.eXp <- DIAlignR:::extractXIC_group(mzPntrs[[eXp]]$mz, chromIndices)
         ## End timer
         exec_time <- tictoc::toc(quiet = T)
         message(sprintf("Extracting XIC with %s traces for eXp run %s: Elapsed Time = %s sec", length(chromIndices), eXp, round(exec_time$toc - exec_time$tic, 3) ))
@@ -295,7 +298,25 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
         if(any(pair %in% names(loessFits))){
           Loess.fit <- loessFits[[pair]]
         } else{
-          Loess.fit <- getGlobalAlignment(oswFiles, ref, eXp, maxFdrLoess, spanvalue, fitType = "loess")
+          # Loess.fit <- getGlobalAlignment(oswFiles, ref, eXp, maxFdrLoess, spanvalue, fitType = "loess")
+          maxFdrLoess_list <- seq(maxFdrLoess, 1, 0.05)
+          i <- 1
+          Loess.fit <- NULL
+          while ( is.null(Loess.fit) ) {
+            maxFdrLoess_i <- maxFdrLoess_list[i]
+            Loess.fit <- tryCatch(
+              expr = {
+                message( sprintf("Used maxFdrLoess: %s", maxFdrLoess))
+                Loess.fit <- getGlobalAlignment(oswFiles, ref, eXp, maxFdrLoess, spanvalue, fitType = "loess")
+                
+              },
+              error = function(e){
+                message(sprintf("The following error occured using maxFdrLoess %s: %s", maxFdrLoess, e$message))
+                Loess.fit <- NULL
+              }
+            )
+            i <- i + 1
+          }
           loessFits[[pair]] <- Loess.fit
         }
         # Set up constraints for penalizing similarity matrix
