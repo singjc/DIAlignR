@@ -198,7 +198,7 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
   message("Performing reference-based alignment.")
   start_time <- Sys.time()
   for(analyteIdx in seq_along(refAnalytes)){
-    
+    message( sprintf("@@ -> AnalyteIdx: %s of %s Analytes\n", analyteIdx, length(seq_along(refAnalytes))) )
     analyte <- refAnalytes[analyteIdx]
     
     cat("\n---------------------- START --------------------------\n")
@@ -243,8 +243,8 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
     } else {
       tictoc::tic()
       XICs.ref <- DIAlignR:::extractXIC_group(mz = mzPntrs[[ref]]$mz, chromIndices = chromIndices,
-                                   XICfilter = XICfilter, SgolayFiltOrd = SgolayFiltOrd,
-                                   SgolayFiltLen = SgolayFiltLen)
+                                              XICfilter = XICfilter, SgolayFiltOrd = SgolayFiltOrd,
+                                              SgolayFiltLen = SgolayFiltLen)
       ## End timer
       exec_time <- tictoc::toc(quiet = T)
       message(sprintf("Extracting XIC with %s traces for ref run %s: Elapsed Time = %s sec", length(chromIndices), ref, round(exec_time$toc - exec_time$tic, 3) ))
@@ -253,7 +253,7 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
     
     # Align all runs to reference run
     for(eXp in exps){
-      
+      message( sprintf("$$ -> eXp: %s of %s exps\n", grep(paste0("^",eXp,"$"), exps), length(exps)) )
       ## Get Overlapping product ms of identifying transitions
       if( identifying ){
         ## Subset list and data into data.table for current analyte
@@ -342,16 +342,18 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
                      adaptiveRT, eXpRT, ifelse( is.null(eXp_feature), 'NULL', eXp_feature) )  )
         
         if(!is.null(eXp_feature)){
-	  if ( length(eXp_feature) > 1 ) warning( sprintf( "There was more than one feature found!! Taking only first feature.. %s", as.character(eXp_feature) ) )
+          message("--> Start Writing Results to respective tables")
+          if ( length(eXp_feature) > 1 ) warning( sprintf( "There was more than one feature found!! Taking only first feature.. %s", as.character(eXp_feature) ) )
           # lowest m_score index
           if ( any("ms2_m_score" %in% names(eXp_feature)) ){ m_score_filter_name <- "ms2_m_score" } else { m_score_filter_name <- "m_score" }
           use_index <- which( min(eXp_feature[[m_score_filter_name]])==eXp_feature[[m_score_filter_name]] )
-	  if ( length(use_index)>1 ) { warning("There were two eXp_features with the same m_score.."); use_index <- 1 }
+          if ( length(use_index)>1 ) { warning("There were two eXp_features with the same m_score.."); use_index <- 1 }
           # A feature is found. Use this feature for quantification.
           lwTbl[analyteIdx, eXp] <- eXp_feature[["leftWidth"]][use_index]
           rtTbl[analyteIdx, eXp] <- eXp_feature[["RT"]][use_index]
           rwTbl[analyteIdx, eXp] <- eXp_feature[["rightWidth"]][use_index]
           intesityTbl[analyteIdx, eXp] <- eXp_feature[["Intensity"]][use_index]
+          message("--> Done Writing Results to respective tables")
         } else {
           # Feature is not found.}
         }
