@@ -122,7 +122,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   }
   
   
-  message(sprintf( "There are %s cores available for multiprocessing, will use %s cores.", future::availableCores(), (future::availableCores()-8) ) )
+  message(sprintf( "There are %s cores available for multiprocessing, will use %s cores.", future::availableCores(), (future::availableCores()-10) ) )
   
   
   ## Save Function input params into a list for parallel input passing
@@ -178,7 +178,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
       # Collect all the pointers for each mzML file.
       message("Collecting metadata from sqMass files.")
       # mzPntrs <- getMZMLpointers(dataPath, runs)
-      mzPntrs <- getsqMassPntrs(dataPath, runs, nameCutPattern = nameCutPattern, chrom_ext = chrom_ext)
+      mzPntrs <- getsqMassPntrs(dataPath, runs, nameCutPattern = nameCutPattern, chrom_ext = chrom_ext, .parallel = TRUE)
       message("Metadata is collected from sqMass files.")
       return_index <- "chromatogramIndex"
       function_param_input$return_index <- return_index

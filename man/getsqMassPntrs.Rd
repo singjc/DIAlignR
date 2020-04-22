@@ -8,7 +8,8 @@ getsqMassPntrs(
   dataPath,
   runs,
   nameCutPattern = "(.*)(/)(.*)",
-  chrom_ext = ".chrom.sqMass"
+  chrom_ext = ".chrom.sqMass",
+  .parallel = TRUE
 )
 }
 \arguments{

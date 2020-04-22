@@ -6,7 +6,46 @@
 #' @importFrom tictoc tic toc
 #' 
 #' @export
-getsqMassPntrs <- function( dataPath, runs, nameCutPattern = "(.*)(/)(.*)", chrom_ext=".chrom.sqMass"  ){
+getsqMassPntrs <- function( dataPath, runs, nameCutPattern = "(.*)(/)(.*)", chrom_ext=".chrom.sqMass", .parallel=TRUE  ){
+  
+  getMZandChromHead <- function( data=NULL, chromatogram_file_i=NULL, run=NULL , sql_query=NULL, mzPntrs=NULL ){
+    if ( !is.null(data) ){
+      data <- data[[1]]
+      chromatogram_file_i <- data$chromFiles
+      run <- data$run_id
+      sql_query <- data$sql_query
+    }
+    if ( is.null(mzPntrs) ){
+      mzPntrs <- list()
+    }
+    message( sprintf("Processing (%s): %s", run, chromatogram_file_i ) )
+    # Establish connection to sqlite database chromatogram file
+    conn <- DBI::dbConnect( RSQLite::SQLite(), chromatogram_file_i )
+    ## Get table of chromatogram incidces and respective transtion ids
+    chromHead <- dplyr::collect( dplyr::tbl(conn, dbplyr::sql(sql_query)) )
+    ## Store run id and mz object into master list
+    mzPntrs[[run]] <- list()
+    ## TODO At somepoint make this store the chrom data for sqmass maybe
+    # mzPntrs[[run]]$mz <- mz 
+    ## Store file path
+    # mzPntrs[[run]]$mz <- chromatogram_file_i
+    mzPntrs[[run]]$mz <- dplyr::collect( dplyr::tbl(conn, dbplyr::sql( "SELECT * FROM DATA"  )) )
+    mzPntrs[[run]]$chromHead <- chromHead
+    ## Append chromHead to sqMass DATA table
+    mzPntrs[[run]]$mz <- merge( mzPntrs[[run]]$chromHead , mzPntrs[[run]]$mz, by.x="chromatogramIndex", by.y="CHROMATOGRAM_ID", all=T)
+    colnames(mzPntrs[[run]]$mz)[which(grepl("chromatogramIndex", colnames(mzPntrs[[run]]$mz)))] <- "CHROMATOGRAM_ID"
+    colnames(mzPntrs[[run]]$mz)[which(grepl("chromatogramId", colnames(mzPntrs[[run]]$mz)))] <- "FRAGMENT_ID"
+    
+    ## Disconnect form database
+    DBI::dbDisconnect(conn) 
+    
+    if ( !is.null(data) ){
+      return( list(mz=mzPntrs[[run]]$mz, chromHead=mzPntrs[[run]]$chromHead) )
+    } else {
+      return( mzPntrs )
+    }
+    
+  }
   
   sql_query <- sprintf("SELECT
 CHROMATOGRAM.NATIVE_ID AS chromatogramId,
@@ -15,51 +54,60 @@ FROM CHROMATOGRAM
 ")
   
   chromFiles <- list.files(dataPath, pattern = ".sqMass", recursive = T, full.names = T)
-  names(chromFiles) <- basename(chromFiles)
+  names(chromFiles) <- gsub( chrom_ext, "", basename(chromFiles))
   
   ## Get filenames from osw files and check if names are consistent between osw and mzML files. ######
   filenames <- getRunNames( dataPath, oswMerged=TRUE, nameCutPattern = nameCutPattern, chrom_ext = chrom_ext )
   filenames <- filenames[filenames$runs %in% runs,]
   
   tictoc::tic('Pre-Loading mzML Chromatogram Files onto disk')
-  mzPntrs <- list()
-  for ( chromatogram_input_index_num in seq(1, length(filenames$runs)) ){
-    tryCatch(
-      expr = {
-        tictoc::tic()
-        run <- rownames(filenames)[ chromatogram_input_index_num ]
-        current_filename <- filenames$runs[ chromatogram_input_index_num ]
-        # message(sprintf("\rCacheing mzML for %s of %s runs", run, length(filenames$runs)))
-        ## Get path for current chromatogram file
-        chromatogram_file_i <-  chromFiles[ grepl(current_filename, names(chromFiles)) ][[1]]
-        # Establish connection to sqlite database chromatogram file
-        conn <- DBI::dbConnect( RSQLite::SQLite(), chromatogram_file_i )
-        ## Get table of chromatogram incidces and respective transtion ids
-        chromHead <- dplyr::collect( dplyr::tbl(conn, dbplyr::sql(sql_query)) )
-        ## Store run id and mz object into master list
-        mzPntrs[[run]] <- list()
-        ## TODO At somepoint make this store the chrom data for sqmass maybe
-        # mzPntrs[[run]]$mz <- mz 
-        ## Store file path
-        # mzPntrs[[run]]$mz <- chromatogram_file_i
-        mzPntrs[[run]]$mz <- dplyr::collect( dplyr::tbl(conn, dbplyr::sql( "SELECT * FROM DATA"  )) )
-        mzPntrs[[run]]$chromHead <- chromHead
-        ## Append chromHead to sqMass DATA table
-        mzPntrs[[run]]$mz <- merge( mzPntrs[[run]]$chromHead , mzPntrs[[run]]$mz, by.x="chromatogramIndex", by.y="CHROMATOGRAM_ID", all=T)
-        colnames(mzPntrs[[run]]$mz)[which(grepl("chromatogramIndex", colnames(mzPntrs[[run]]$mz)))] <- "CHROMATOGRAM_ID"
-        colnames(mzPntrs[[run]]$mz)[which(grepl("chromatogramId", colnames(mzPntrs[[run]]$mz)))] <- "FRAGMENT_ID"
-        
-        ## Disconnect form database
-        DBI::dbDisconnect(conn)
-        ## End timer
-        exec_time <- tictoc::toc(quiet = T)
-        message(sprintf("\rCacheing sqMass for %s of %s runs: Elapsed Time = %s sec", run, length(filenames$runs), round(exec_time$toc - exec_time$tic, 3) ))
-      },
-      error = function(e){
-        message(sprintf("[getsqMassChromIdMapping] There was an issue cacheing %s, skipping...: %s\n", current_filename, e$message))
-      }
-    ) # End tryCatch
+  if ( .parallel==FALSE ){
+    mzPntrs <- list()
+    for ( chromatogram_input_index_num in seq(1, length(filenames$runs)) ){
+      tryCatch(
+        expr = {
+          tictoc::tic()
+          run <- rownames(filenames)[ chromatogram_input_index_num ]
+          current_filename <- filenames$runs[ chromatogram_input_index_num ]
+          # message(sprintf("\rCacheing mzML for %s of %s runs", run, length(filenames$runs)))
+          ## Get path for current chromatogram file
+          chromatogram_file_i <-  chromFiles[ grepl(current_filename, names(chromFiles)) ][[1]]
+          mzPntrs <- getMZandChromHead( chromatogram_file_i, run , sql_query, mzPntrs )
+          
+          ## End timer
+          exec_time <- tictoc::toc(quiet = T)
+          message(sprintf("\rCacheing sqMass for %s of %s runs: Elapsed Time = %s sec", run, length(filenames$runs), round(exec_time$toc - exec_time$tic, 3) ))
+        },
+        error = function(e){
+          message(sprintf("[getsqMassChromIdMapping] There was an issue cacheing %s, skipping...: %s\n", current_filename, e$message))
+        }
+      ) # End tryCatch
+    }
+  } else {
+    masterTbl <- merge( data.table::setDT(filenames, keep.rownames = "run_id"), data.table::as.data.table(chromFiles, keep.rownames="runs"), by="runs" )
+    
+    masterTbl %>%
+      dplyr::mutate( sql_query = sql_query ) %>%
+      dplyr::select( -filename ) %>%
+      dplyr::group_by( runs ) %>%
+      tidyr::nest() -> masterTbl
+    
+    ## Set-Up for multiple processing
+    future::plan( list(future::tweak( future::multiprocess, workers=(future::availableCores()-10) )) )
+    
+    masterTbl%>%
+      dplyr::mutate( mzPntrs = furrr::future_pmap( list(data), ~getMZandChromHead( data=data ) ) ) -> tmp
+    
+    ## Explicitly close multisession workers by switching plan
+    future::plan(future::sequential)
+    ## run garbage collector
+    gc()
+    
+    mzPntrs <- tmp$mzPntrs
+    names(mzPntrs) <- tidyr::unnest(masterTbl, cols="data") %>% dplyr::ungroup() %>% dplyr::select( run_id ) %>% as.matrix() %>% as.character()
+    
   }
+  
   tictoc::toc()
   
   return( mzPntrs )
