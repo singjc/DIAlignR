@@ -22,42 +22,54 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("."))
 #' }
 #' @seealso \code{\link{getOswFiles}, \link{getOswAnalytes}}
 getRefRun <- function(oswFiles, analyte){
-  # Select reference run based on m-score
-  minMscore <- 1
-  refRunIdx <- NULL
-  for(runIdx in seq_along(oswFiles)){
-    ## Filter first on m_score to find the best candiate peptide feature
-    m_score <- oswFiles[[runIdx]] %>%
-      # dplyr::filter(transition_group_id == analyte )
-      dplyr::group_by( transition_group_id ) %>%
-      dplyr::filter(transition_group_id == analyte & m_score==min(m_score) ) 
-    ## Check to see if there are still more than one peak group per peptide option.
-    ## If there is then do a second pass filter for the lowest peakgroup rank
-    if ( dim(m_score)[1]>1 ){
-      m_score %>%
-        dplyr::filter(transition_group_id == analyte & peak_group_rank==min(peak_group_rank) ) -> m_score
+  if ( class(oswFiles)=='list' ){
+    # Select reference run based on m-score
+    minMscore <- 1
+    refRunIdx <- NULL
+    for(runIdx in seq_along(oswFiles)){
+      ## Filter first on m_score to find the best candiate peptide feature
+      m_score <- oswFiles[[runIdx]] %>%
+        # dplyr::filter(transition_group_id == analyte )
+        dplyr::group_by( transition_group_id ) %>%
+        dplyr::filter(transition_group_id == analyte & m_score==min(m_score) ) 
+      ## Check to see if there are still more than one peak group per peptide option.
+      ## If there is then do a second pass filter for the lowest peakgroup rank
       if ( dim(m_score)[1]>1 ){
-       m_score %>%
-          dplyr::filter( dplyr::row_number()==1 ) -> m_score
-      }
-    }
-    ## Extract on the m_score
-    m_score %>%
-      dplyr::ungroup() %>% .$m_score -> m_score
-    # Check for numeric(0) condition and proceed.
-    tryCatch(
-      expr = {
-        if(length(m_score) != 0){
-          if(m_score < minMscore){
-            minMscore <- m_score
-            refRunIdx <- runIdx
-          }
+        m_score %>%
+          dplyr::filter(transition_group_id == analyte & peak_group_rank==min(peak_group_rank) ) -> m_score
+        if ( dim(m_score)[1]>1 ){
+          m_score %>%
+            dplyr::filter( dplyr::row_number()==1 ) -> m_score
         }
-      }, 
-      error = function(e){
-        message( sprintf("[DIAlignR::utils::getRefRun] There was an error that occured during reference run index extraction.\n%s", e$message))
       }
-    )
+      ## Extract on the m_score
+      m_score %>%
+        dplyr::ungroup() %>% .$m_score -> m_score
+      # Check for numeric(0) condition and proceed.
+      tryCatch(
+        expr = {
+          if(length(m_score) != 0){
+            if(m_score < minMscore){
+              minMscore <- m_score
+              refRunIdx <- runIdx
+            }
+          }
+        }, 
+        error = function(e){
+          message( sprintf("[DIAlignR::utils::getRefRun] There was an error that occured during reference run index extraction.\n%s", e$message))
+        }
+      )
+      
+    }
+  } else {
+    oswFiles %>%
+      dplyr::mutate( best_m_score=m_score==min(m_score) ) -> tmp
+    
+    refRunIdx <- which( tmp$best_m_score )
+    if ( length(refRunIdx) > 1 ){
+      warning( sprintf("There were %s scores with the same best m_score.\nPicking first choice..\n", length(refRunIdx)) )
+      refRunIdx <- refRunIdx[[1]]
+    }
     
   }
   ## Return refRunIdx
@@ -87,60 +99,97 @@ getRefRun <- function(oswFiles, analyte){
 #' }
 #' @seealso \code{\link{getOswFiles}, \link{getOswAnalytes}}
 selectChromIndices <- function(oswFiles, runname, analyte, product_mz_filter_list=NULL, return_index="chromatogramIndex",  keep_all_detecting=T){
-  
-  ## TMP Fix
-  ## Second pass filter to ensure only one analyte is being mapped once to the same peak
-  ## There are cases for ipf where different assays would result in the same peptide being mapped to the same peak multiple times due to being the winning hypothesis
-  oswFiles[[runname]] %>%
-    dplyr::group_by( transition_group_id, filename ) %>%
-    dplyr::add_count() %>%
-    dplyr::ungroup() -> tmp
-  tmp %>%
-    dplyr::group_by( transition_group_id, filename ) %>%
-    dplyr::filter( ifelse( n>1, ifelse(m_score==min(m_score), T, F), T ) ) -> tmp
-  ## Remove count column
-  tmp$n <- NULL
-  ## count again to check if there are sitll more than one entry
-  tmp %>%
-    dplyr::group_by( transition_group_id, filename ) %>%
-    dplyr::add_count() %>%
-    dplyr::ungroup() -> tmp
-  ## Remove count column
-  tmp$n <- NULL
-  
-  # Pick chromatrogram indices from osw table.
-  chromIndices <- tmp %>%
-    dplyr::filter(transition_group_id == analyte) %>% dplyr::pull( !!rlang::sym(return_index) )
-  
-  # Check for character(0) condition and proceed.
-  if(length(chromIndices) != 0){
-    ### TODO: Make this more stream-line
-    if ( !is.null(product_mz_filter_list) ){
-      oswFiles[[runname]] %>%
-        dplyr::filter(transition_group_id == analyte) %>%
-        dplyr::filter( m_score == min(m_score) ) %>%
+  if ( class(oswFiles)=='list' ){
+    ## TMP Fix
+    ## Second pass filter to ensure only one analyte is being mapped once to the same peak
+    ## There are cases for ipf where different assays would result in the same peptide being mapped to the same peak multiple times due to being the winning hypothesis
+    oswFiles[[runname]] %>%
+      dplyr::group_by( transition_group_id, filename ) %>%
+      dplyr::add_count() %>%
+      dplyr::ungroup() -> tmp
+    tmp %>%
+      dplyr::group_by( transition_group_id, filename ) %>%
+      dplyr::filter( ifelse( n>1, ifelse(m_score==min(m_score), T, F), T ) ) -> tmp
+    ## Remove count column
+    tmp$n <- NULL
+    ## count again to check if there are sitll more than one entry
+    tmp %>%
+      dplyr::group_by( transition_group_id, filename ) %>%
+      dplyr::add_count() %>%
+      dplyr::ungroup() -> tmp
+    ## Remove count column
+    tmp$n <- NULL
+    
+    # Pick chromatrogram indices from osw table.
+    chromIndices <- tmp %>%
+      dplyr::filter(transition_group_id == analyte) %>% dplyr::pull( !!rlang::sym(return_index) )
+    
+    # Check for character(0) condition and proceed.
+    if(length(chromIndices) != 0){
+      ### TODO: Make this more stream-line
+      if ( !is.null(product_mz_filter_list) ){
+        oswFiles[[runname]] %>%
+          dplyr::filter(transition_group_id == analyte) %>%
+          dplyr::filter( m_score == min(m_score) ) %>%
+          dplyr::filter( peak_group_rank==min(peak_group_rank) ) %>%
+          dplyr::slice(1L) %>%
+          tidyr::separate_rows( product_mz, detecting_transitions, identifying_transitions, chromatogramIndex, transition_ids ) %>%
+          dplyr::mutate( product_mz_detecting=paste(product_mz, detecting_transitions, sep='_') ) -> tmp_long_oswFiles
+        ## Should all detecting transitions be forced to be kept even if mz is not overlapping
+        if ( keep_all_detecting ){
+          transition_boolean_filter <- (tmp_long_oswFiles$product_mz_detecting %in% product_mz_filter_list) | tmp_long_oswFiles$detecting_transitions==1
+        } else {
+          transition_boolean_filter <- (tmp_long_oswFiles$product_mz_detecting %in% product_mz_filter_list)
+        }
+        
+        tmp_long_oswFiles %>%
+          dplyr::filter( transition_boolean_filter ) %>% 
+          unique() %>%
+          dplyr::pull( !!rlang::sym(return_index) ) %>% as.integer() -> chromIndices
+        
+      } else {
+        chromIndices <- as.integer(strsplit(chromIndices, split = ",")[[1]])
+      }
+    } else {
+      return(NULL)
+    }
+  } else {
+    oswFiles  %>%
+      dplyr::filter( run_id==runname ) -> tmp
+    if ( dim(tmp)[1]>0 ){
+      tmp %>%
+        dplyr::filter( m_score==min(m_score) ) %>%
         dplyr::filter( peak_group_rank==min(peak_group_rank) ) %>%
         dplyr::slice(1L) %>%
         tidyr::separate_rows( product_mz, detecting_transitions, identifying_transitions, chromatogramIndex, transition_ids ) %>%
         dplyr::mutate( product_mz_detecting=paste(product_mz, detecting_transitions, sep='_') ) -> tmp_long_oswFiles
-      ## Should all detecting transitions be forced to be kept even if mz is not overlapping
-      if ( keep_all_detecting ){
-        transition_boolean_filter <- (tmp_long_oswFiles$product_mz_detecting %in% product_mz_filter_list) | tmp_long_oswFiles$detecting_transitions==1
+      
+      ## Should all detecting transitions be forced to be kept even if mz is not overlappingif
+      if ( !is.null(product_mz_filter_list) ){
+        if ( keep_all_detecting ){
+          transition_boolean_filter <- (tmp_long_oswFiles$product_mz_detecting %in% product_mz_filter_list) | tmp_long_oswFiles$detecting_transitions==1
+        } else {
+          transition_boolean_filter <- (tmp_long_oswFiles$product_mz_detecting %in% product_mz_filter_list)
+        }
+        tmp_long_oswFiles %>%
+          dplyr::filter( transition_boolean_filter ) %>% 
+          unique() %>%
+          dplyr::pull( !!rlang::sym(return_index) ) %>% as.integer() -> chromIndices
       } else {
-        transition_boolean_filter <- (tmp_long_oswFiles$product_mz_detecting %in% product_mz_filter_list)
+        tmp_long_oswFiles %>%
+          unique() %>%
+          dplyr::pull( !!rlang::sym(return_index) ) %>% as.integer() -> chromIndices
       }
-      
-      tmp_long_oswFiles %>%
-        dplyr::filter( transition_boolean_filter ) %>% 
-        unique() %>%
-        dplyr::pull( !!rlang::sym(return_index) ) %>% as.integer() -> chromIndices
-      
+      if ( length(chromIndices) == 0 ){
+        warning(sprintf("There were no chromIndices found for %s. Returning NULL..\n", runname))
+        return(NULL)
+      }
     } else {
-      chromIndices <- as.integer(strsplit(chromIndices, split = ",")[[1]])
+      warning(sprintf("There were no chromIndices found for %s. Returning NULL..\n", runname))
+      return(NULL)
     }
-  } else {
-    return(NULL)
   }
+  
   if(any(is.na(chromIndices))){
     # Indices for one or more fragment-ions are missing. This could happen if .chrom.mzML file doesn't have them.
     return(NULL)

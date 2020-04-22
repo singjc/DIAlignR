@@ -30,7 +30,7 @@
 #' }
 pickNearestFeature <- function(eXpRT, analyte, oswFiles, runname, adaptiveRT, featureFDR){
   # Fetch features for an analyte.
-  df <- oswFiles[[runname]] %>% dplyr::filter(transition_group_id == analyte) %>%
+  df <- if ( class(oswFiles)=='list' ) oswFiles[[runname]] else dplyr::filter(oswFiles, run_id==runname) %>% dplyr::filter(transition_group_id == analyte) %>%
     dplyr::select(leftWidth, rightWidth, RT, Intensity, peak_group_rank, contains("ms2_m_score"), m_score)
   # select features which are within adaptive RT of mapped retention time.
   df <- df %>% dplyr::filter(abs(RT - eXpRT) <= adaptiveRT)

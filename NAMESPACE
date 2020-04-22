@@ -2,6 +2,7 @@
 
 export(alignChromatogramsCpp)
 export(alignTargetedRuns)
+export(alignTargetedRuns_par)
 export(areaIntegrator)
 export(constrainSimCpp)
 export(doAffineAlignmentCpp)
