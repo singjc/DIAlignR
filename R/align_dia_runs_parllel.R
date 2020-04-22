@@ -121,8 +121,10 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     eXp <- "run5"
   }
   
+  
+  message(sprintf( "There are %s cores available for multiprocessing.", future::availableCores() ) )
   ## Set-Up for multiple processing
-  future::plan(future::multiprocess)
+  future::plan(tweak(future::multiprocess, workers=(future::availableCores()-4) ))
   
   ## Save Function input params into a list for parallel input passing
   function_param_input <- list(alignType = alignType, analyteInGroupLabel = analyteInGroupLabel, oswMerged = oswMerged,
@@ -224,6 +226,9 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   # Report the execution time for hybrid alignment step.
   end_time <- Sys.time()
   message("Execution time for alignment = ", end_time - start_time)
+  
+  ## Explicitly close multisession workers by switching plan
+  plan(sequential)
   
   ## Cleanup. 
   rm(mzPntrs)
