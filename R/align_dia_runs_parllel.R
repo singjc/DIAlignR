@@ -124,7 +124,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   
   message(sprintf( "There are %s cores available for multiprocessing.", future::availableCores() ) )
   ## Set-Up for multiple processing
-  future::plan(tweak(future::multiprocess, workers=(future::availableCores()-4) ))
+  future::plan(future::tweak(future::multiprocess, workers=(future::availableCores()-4) ))
   
   ## Save Function input params into a list for parallel input passing
   function_param_input <- list(alignType = alignType, analyteInGroupLabel = analyteInGroupLabel, oswMerged = oswMerged,
