@@ -122,9 +122,8 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   }
   
   
-  message(sprintf( "There are %s cores available for multiprocessing.", future::availableCores() ) )
-  ## Set-Up for multiple processing
-  future::plan( list(future::tweak( future::multiprocess, workers=(future::availableCores()-4) )) )
+  message(sprintf( "There are %s cores available for multiprocessing, will use %s cores.", future::availableCores(), (future::availableCores()-8) ) )
+  
   
   ## Save Function input params into a list for parallel input passing
   function_param_input <- list(alignType = alignType, analyteInGroupLabel = analyteInGroupLabel, oswMerged = oswMerged,
@@ -219,7 +218,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   message("Performing reference-based alignment.")
   start_time <- Sys.time()
   masterTbl %>%
-    dplyr::mutate( alignment_results = furrr::future_pmap( list(data, mzPntrs, function_param_input), ~analyte_align_par_func(oswdata = data, mzPntrs = mzPntrs, function_param_input = function_param_input), .progress = TRUE ) ) -> tmp
+    dplyr::mutate( alignment_results = purrr::pmap( list(data, mzPntrs, function_param_input), ~analyte_align_par_func(oswdata = data, mzPntrs = mzPntrs, function_param_input = function_param_input) ) ) -> tmp
   
   alignment_results <- data.table::rbindlist(tmp$alignment_results, fill = TRUE)
   
@@ -227,8 +226,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   end_time <- Sys.time()
   message("Execution time for alignment = ", end_time - start_time)
   
-  ## Explicitly close multisession workers by switching plan
-  plan(sequential)
+  
   
   ## Cleanup. 
   rm(mzPntrs)

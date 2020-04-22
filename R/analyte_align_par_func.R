@@ -73,8 +73,14 @@ analyte_align_par_func <- function( oswdata, mzPntrs, function_param_input ){
                    mzPntrs = list(mzPntrs),
                    function_param_input = list(function_param_input) ) -> oswdata_runpairs
   
+  ## Set-Up for multiple processing
+  future::plan( list(future::tweak( future::multiprocess, workers=(future::availableCores()-8) )) )
+  
   oswdata_runpairs %>%
-    dplyr::mutate( runpair_alignment = purrr::pmap( list(data, XICs.ref, mzPntrs, function_param_input), ( ~pairwise_align_par_func(oswdata_runpair_data = data, XICs.ref = XICs.ref, mzPntrs = mzPntrs, function_param_input = function_param_input ) ) ) ) -> tmp
+    dplyr::mutate( runpair_alignment = furrr::future_pmap( list(data, XICs.ref, mzPntrs, function_param_input), ( ~pairwise_align_par_func(oswdata_runpair_data = data, XICs.ref = XICs.ref, mzPntrs = mzPntrs, function_param_input = function_param_input ) ) ) ) -> tmp
+  
+  ## Explicitly close multisession workers by switching plan
+  plan(sequential)
   
   analyte_alignment_results <- data.table::rbindlist(tmp$runpair_alignment)
   
