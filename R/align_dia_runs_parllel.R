@@ -125,6 +125,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   
   message(sprintf( "There are %s cores available for multiprocessing, will use %s cores.", future::availableCores(), (future::availableCores()-10) ) )
   
+  func_call_start_time <- Sys.time()
   
   ## Save Function input params into a list for parallel input passing
   function_param_input <- list(alignType = alignType, analyteInGroupLabel = analyteInGroupLabel, oswMerged = oswMerged,
@@ -264,7 +265,9 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   end_time <- Sys.time()
   message("Execution time for alignment = ", end_time - start_time)
   
+  func_call_end_time <- Sys.time()
   
+  message( sprintf("Function Call started at: %s\nFunction Call ended at: %s\n", func_call_start_time, func_call_end_time) )
   
   ## Cleanup. 
   rm(mzPntrs)
