@@ -33,7 +33,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, mzPntrs, fu
     } else {
       ## Set procuct_mz_intersect to NULL
       procuct_mz_intersect <- NULL
-      warning("Chromatogram indices for ", analyte, " are missing in ", runs[eXp])
+      warning("Chromatogram indices for ", analyte, " are missing in ", function_param_input$runs[eXp])
       next
     }
   } else {
@@ -132,7 +132,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, mzPntrs, fu
       # Feature is not found.}
     }
   } else {
-    warning("Chromatogram indices for ", analyte, " are missing in ", runs[eXp])
+    warning("Chromatogram indices for ", analyte, " are missing in ", function_param_input$runs[eXp])
     return( NULL ) #TODO change this return to something more representible maybe
   }
   

@@ -76,6 +76,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     library(dplyr)
     library(zoo)
     # dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/lower_product_mz_threshold/DIAlignR_Analysis/data"
+    dataPath <- "/media/roestlab/Data1/User/JustinS/phospho_enriched_u2os/Georges_Results/data"
     dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/George_lib_repeat2/DIAlignR_Analysis/data/"
     alignType = "hybrid"; analyteInGroupLabel = FALSE; oswMerged = TRUE;
     runs = NULL; analytes = NULL; nameCutPattern = "(.*)(/)(.*)"; chrom_ext=".chrom.sqMass"
@@ -155,9 +156,12 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   }
   message("Following runs will be aligned:")
   print(filenames[, "runs"], sep = "\n")
+  runs <- filenames$runs
+  names(runs) <- rownames(filenames)
+  function_param_input$runs <- runs
   
   if ( !file.exists(file.path(getwd(), "mzPntrs.rds")) ){
-    
+
     ## If using mzML files, cache data
     if ( grepl(".*mzML", chrom_ext) ){
       if(is.null(mzPntrs)){
@@ -191,7 +195,10 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
       }
     }
   } else {
+    message("Reading in a stored mzPntrs.rds object: ", appendLF=FALSE)
+    tictoc::tic()
     mzPntrs <- readRDS( file.path(getwd(), "mzPntrs.rds") )
+    tictoc::toc()
     return_index <- "chromatogramIndex"
     function_param_input$return_index <- return_index
   }
@@ -206,7 +213,10 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     ## Save oswFiles object as rds object
     saveRDS( oswFiles, file.path(getwd(), "oswFiles.rds") )
   } else {
+    message("Reading in a stored oswFiles.rds object: ", appendLF=FALSE)
+    tictoc::tic()
     oswFiles <- readRDS( file.path(getwd(), "oswFiles.rds") )
+    tictoc::toc()
   }
   
   ## Get Reference Analytes

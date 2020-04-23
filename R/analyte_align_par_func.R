@@ -36,15 +36,18 @@ analyte_align_par_func <- function( oswdata, mzPntrs, function_param_input ){
   ## Store refPeak for down the line processing comparison
   function_param_input$refPeak <- refPeak
   
+  message(sprintf("Reference Peak at %s with boundaries (%s, %s) and intensity of %s", refPeak$RT, refPeak$leftWidth, refPeak$rightWidth, refPeak$Intensity))
+  
   # Get XIC_group from reference run. if missing, go to next analyte.
-  ref <- names(runs)[refRunIdx]
-  exps <- setdiff(names(runs), ref)
+  ref <- names(function_param_input$runs)[refRunIdx]
+  exps <- setdiff(names(function_param_input$runs), ref)
   chromIndices <- selectChromIndices(oswdata, runname = ref, analyte = analyte, return_index=return_index )
   
   if(is.null(chromIndices)){
-    warning("Chromatogram indices for ", analyte, " are missing in ref run ", runs[ref])
+    warn_msg <- paste0("Chromatogram indices for ", analyte, " are missing in ref run ", function_param_input$runs[ref])
+    warning(warn_msg)
     message("Skipping: ", analyte)
-    dummy_dt <- data.table::data.table( transition_group_id=NaN, filename=NaN, run_id=NaN, run_type=NaN, alignment_run_id_pair=NaN, alignment_run_file_pair=NaN, RTo=NaN, RT=NaN, leftWidth=NaN, rightWidth=NaN, Intensity=NaN, peak_group_rank=NaN, ms2_m_score=NaN, m_score=NaN )
+    dummy_dt <- data.table::data.table( transition_group_id=NaN, filename=NaN, run_id=NaN, run_type=NaN, alignment_run_id_pair=NaN, alignment_run_file_pair=NaN, RTo=NaN, leftWidtho=NaN, rightWidtho=NaN, Intensityo=NaN, RT=NaN, leftWidth=NaN, rightWidth=NaN, Intensity=NaN, peak_group_rank=NaN, ms2_m_score=NaN, m_score=NaN, alignment_log=warn_msg )
     dummy_dt$transition_group_id <- analyte
     return( dummy_dt ) #TODO: Return a table maybe?
   } else {
