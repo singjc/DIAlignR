@@ -23,6 +23,7 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("."))
 #' @seealso \code{\link{getOswFiles}, \link{getOswAnalytes}}
 getRefRun <- function(oswFiles, analyte){
   if ( class(oswFiles)=='list' ){
+    message("Getting RefRun from list obj")
     # Select reference run based on m-score
     minMscore <- 1
     refRunIdx <- NULL
@@ -62,6 +63,7 @@ getRefRun <- function(oswFiles, analyte){
       
     }
   } else {
+    message("Getting RefRun from data.frame obj")
     oswFiles %>%
       dplyr::mutate( best_m_score=m_score==min(m_score) ) -> tmp
     
@@ -100,6 +102,7 @@ getRefRun <- function(oswFiles, analyte){
 #' @seealso \code{\link{getOswFiles}, \link{getOswAnalytes}}
 selectChromIndices <- function(oswFiles, runname, analyte, product_mz_filter_list=NULL, return_index="chromatogramIndex",  keep_all_detecting=T){
   if ( class(oswFiles)=='list' ){
+    message("Getting ChromIndices from list obj")
     ## TMP Fix
     ## Second pass filter to ensure only one analyte is being mapped once to the same peak
     ## There are cases for ipf where different assays would result in the same peptide being mapped to the same peak multiple times due to being the winning hypothesis
@@ -154,6 +157,7 @@ selectChromIndices <- function(oswFiles, runname, analyte, product_mz_filter_lis
       return(NULL)
     }
   } else {
+    message("Getting ChromIndices from data.frame obj")
     oswFiles  %>%
       dplyr::filter( run_id==runname ) -> tmp
     if ( dim(tmp)[1]>0 ){

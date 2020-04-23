@@ -5,7 +5,7 @@ analyte_align_par_func <- function( oswdata, mzPntrs, function_param_input ){
   function_param_input <- function_param_input[[1]]
   
   analyte <- unique( oswdata$transition_group_id )
-  cat( sprintf("analyte: %s\n", analyte) )
+  cat( sprintf("analyte (%s of %s): %s\n", unique(oswdata$analyte_row_id), unique(oswdata$n_analytes), analyte) )
   
   # Select reference run based on m-score
   refRunIdx <- getRefRun(oswdata, analyte)
@@ -65,7 +65,7 @@ analyte_align_par_func <- function( oswdata, mzPntrs, function_param_input ){
   oswdata_runpairs <- tryCatch( expr = {
     oswdata %>%
       dplyr::group_by( run_id ) %>%
-      dplyr::slice( rep(which(run_id==ref & m_score==min(m_score)), each = nrow(oswdata) ) ) %>%
+      dplyr::slice( rep(which(run_id==ref & m_score==min(m_score) & row_number()==1 ), each = nrow(oswdata) ) ) %>% # TODO: picking the first row if multiple might not be right here, temp solution
       dplyr::ungroup() %>%
       dplyr::mutate( run_id_bind=oswdata$run_id ) %>%
       dplyr::bind_rows( oswdata ) %>%
@@ -80,7 +80,7 @@ analyte_align_par_func <- function( oswdata, mzPntrs, function_param_input ){
                      function_param_input = list(function_param_input) ) -> oswdata_runpairs
   },
   error = function(e){
-    warning(sprintf("There was the following error wwhile setting up oswdata_runpairs for parallel mapping:\n%s", e$message))
+    warning(sprintf("There was the following error while setting up oswdata_runpairs for parallel mapping:\n%s", e$message))
     oswdata_runpairs <- NULL
     return(  oswdata_runpairs )
   })
@@ -110,7 +110,7 @@ analyte_align_par_func <- function( oswdata, mzPntrs, function_param_input ){
   ## Get Reference data
   oswdata %>%
     dplyr::group_by( run_id ) %>%
-    dplyr::filter( run_id==ref & m_score==min(m_score) ) %>%
+    dplyr::filter( run_id==ref & m_score==min(m_score) & row_number()==1 ) %>% # TODO: picking the first row if multiple might not be right here, temp solution
     dplyr::ungroup() %>%
     dplyr::select( run_id, transition_group_id, filename, RT, leftWidth, rightWidth, Intensity, peak_group_rank, contains("ms2_m_score"), m_score ) %>%
     dplyr::mutate( run_type = "ref",

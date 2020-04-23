@@ -28,8 +28,7 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("m_score"))
 #' }
 getLOESSfit <- function(oswFiles, ref, eXp, maxFdrGlobal, spanvalue = 0.1){
   ## TODO: Note: Changed peak_group_rank==1 to min peak_group_rank
-  df.ref <-  if ( class(oswFiles)=='list' ) oswFiles[[ref]] else dplyr::filter(oswFiles, run_id==ref)  %>% dplyr::filter(m_score <= maxFdrGlobal & peak_group_rank==min(peak_group_rank)) %>%
-    dplyr::select(transition_group_id, RT)
+  df.ref <-  if ( class(oswFiles)=='list' ) oswFiles[[ref]] else dplyr::filter(oswFiles, run_id==ref)  %>% dplyr::filter(m_score <= maxFdrGlobal & peak_group_rank==min(peak_group_rank)) %>%  dplyr::select(transition_group_id, RT)
   df.eXp <-  if ( class(oswFiles)=='list' ) oswFiles[[eXp]] else dplyr::filter(oswFiles, run_id==eXp)  %>% dplyr::filter(m_score <= maxFdrGlobal & peak_group_rank==min(peak_group_rank)) %>%
     dplyr::select(transition_group_id, RT)
   RUNS_RT <- dplyr::inner_join(df.ref, df.eXp, by = "transition_group_id", suffix = c(".ref", ".eXp"))
