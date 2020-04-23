@@ -240,7 +240,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     dplyr::mutate( mzPntrs = list(mzPntrs),
                    function_param_input = list(function_param_input) ) -> masterTbl
   
- masterTbl <- masterTbl[c(5), ] 
+ #masterTbl <- masterTbl[c(5), ] 
   
   
   message("Performing reference-based alignment.")
