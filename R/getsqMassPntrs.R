@@ -93,7 +93,7 @@ FROM CHROMATOGRAM
       tidyr::nest() -> masterTbl
     
     ## Set-Up for multiple processing
-    future::plan( list(future::tweak( future::multicore(), workers=(future::availableCores()-10) )) )
+    future::plan( list(future::tweak( future::multicore, workers=(future::availableCores()-10) )) )
     
     masterTbl%>%
       dplyr::mutate( mzPntrs = furrr::future_pmap( list(data), ~getMZandChromHead( data=data ) ) ) -> tmp
