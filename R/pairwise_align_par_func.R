@@ -15,7 +15,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, mzPntrs, fu
     ## Subset list and data into data.table for current analyte
     oswdata_runpair_data %>% dplyr::filter( run_id %in% c(ref, eXp) ) -> oswFile_subset
     
-    if ( any(grepl(paste0(".*", filenames$runs[which(rownames(filenames) %in% ref)], ".*"), oswFile_subset$filename)) & any(grepl(paste0(".*", filenames$runs[which(rownames(filenames) %in% eXp)], ".*"), oswFile_subset$filename)) ) {
+    if ( any(grepl(paste0(".*", function_param_input$filenames$runs[which(rownames(function_param_input$filenames) %in% ref)], ".*"), oswFile_subset$filename)) & any(grepl(paste0(".*", function_param_input$filenames$runs[which(rownames(function_param_input$filenames) %in% eXp)], ".*"), oswFile_subset$filename)) ) {
       
       ## Get overlapping product mz checking for detecting or identifying transition overlap
       procuct_mz_intersect <- Reduce( intersect, lapply(seq(1,dim(oswFile_subset)[1]), function(row_idx) paste( strsplit(oswFile_subset$product_mz, ",")[[row_idx]], strsplit(oswFile_subset$detecting_transitions, ",")[[row_idx]], sep="_" ) ) )
@@ -95,7 +95,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, mzPntrs, fu
     
     cat( sprintf("ref: %s\neXp: %s\nref_run: %s\neXp_run: %s\ndim(XICs.ref): %s\ndim(XICs.eXp): %s\nadaptiveRT: %s\neXpRT: %s\neXp_feature: %s\n", 
                  ref, eXp, 
-                 filenames$runs[which(rownames(filenames) %in% ref)], filenames$runs[which(rownames(filenames) %in% eXp)], 
+                 function_param_input$filenames$runs[which(rownames(function_param_input$filenames) %in% ref)], function_param_input$filenames$runs[which(rownames(function_param_input$filenames) %in% eXp)], 
                  paste(unlist(lapply(XICs.ref, function(x) length(x[[1]]))), collapse=", "), paste(unlist(lapply(XICs.eXp, function(x) length(x[[1]]))), collapse=", "), 
                  adaptiveRT, eXpRT, ifelse( is.null(eXp_feature), 'NULL', eXp_feature) )  )
     

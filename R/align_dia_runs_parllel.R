@@ -159,6 +159,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   runs <- filenames$runs
   names(runs) <- rownames(filenames)
   function_param_input$runs <- runs
+  function_param_input$filenames <- filenames
   
   if ( !file.exists(file.path(getwd(), "mzPntrs.rds")) ){
 
