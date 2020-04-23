@@ -11,7 +11,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, mzPntrs, fu
   message(sprintf("Working on analyte: %s | ref: %s | exp: %s", analyte, ref, eXp))
   
   ## Get Overlapping product ms of identifying transitions
-  if( identifying ){
+  if( function_param_input$identifying ){
     ## Subset list and data into data.table for current analyte
     oswdata_runpair_data %>% dplyr::filter( run_id %in% c(ref, eXp) ) -> oswFile_subset
     
