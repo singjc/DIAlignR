@@ -156,43 +156,60 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   message("Following runs will be aligned:")
   print(filenames[, "runs"], sep = "\n")
   
-  ## If using mzML files, cache data
-  if ( grepl(".*mzML", chrom_ext) ){
-    if(is.null(mzPntrs)){
-      ######### Collect pointers for each mzML file. #######
-      runs <- filenames$runs
-      names(runs) <- rownames(filenames)
-      # Collect all the pointers for each mzML file.
-      message("Collecting metadata from mzML files.")
-      # mzPntrs <- getMZMLpointers(dataPath, runs)
-      mzPntrs <- getmzPntrs(dataPath, runs)
-      message("Metadata is collected from mzML files.")
-      return_index <- "chromatogramIndex"
-      function_param_input$return_index <- return_index
+  if ( !file.exists(file.path(getwd(), "mzPntrs.rds")) ){
+    
+    ## If using mzML files, cache data
+    if ( grepl(".*mzML", chrom_ext) ){
+      if(is.null(mzPntrs)){
+        ######### Collect pointers for each mzML file. #######
+        runs <- filenames$runs
+        names(runs) <- rownames(filenames)
+        # Collect all the pointers for each mzML file.
+        message("Collecting metadata from mzML files.")
+        # mzPntrs <- getMZMLpointers(dataPath, runs)
+        mzPntrs <- getmzPntrs(dataPath, runs)
+        message("Metadata is collected from mzML files.")
+        return_index <- "chromatogramIndex"
+        function_param_input$return_index <- return_index
+        ## Save rds object
+        saveRDS( mzPntrs, file.path(getwd(), "mzPntrs.rds") )
+      }
+    } else if ( grepl(".*sqMass", chrom_ext) ){
+      if(is.null(mzPntrs)){
+        ######### Collect pointers for each mzML file. #######
+        runs <- filenames$runs
+        names(runs) <- rownames(filenames)
+        # Collect all the pointers for each mzML file.
+        message("Collecting metadata from sqMass files.")
+        # mzPntrs <- getMZMLpointers(dataPath, runs)
+        mzPntrs <- getsqMassPntrs(dataPath, runs, nameCutPattern = nameCutPattern, chrom_ext = chrom_ext, .parallel = TRUE)
+        message("Metadata is collected from sqMass files.")
+        return_index <- "chromatogramIndex"
+        function_param_input$return_index <- return_index
+        ## Save rds object
+        saveRDS( mzPntrs, file.path(getwd(), "mzPntrs.rds") )
+      }
     }
-  } else if ( grepl(".*sqMass", chrom_ext) ){
-    if(is.null(mzPntrs)){
-      ######### Collect pointers for each mzML file. #######
-      runs <- filenames$runs
-      names(runs) <- rownames(filenames)
-      # Collect all the pointers for each mzML file.
-      message("Collecting metadata from sqMass files.")
-      # mzPntrs <- getMZMLpointers(dataPath, runs)
-      mzPntrs <- getsqMassPntrs(dataPath, runs, nameCutPattern = nameCutPattern, chrom_ext = chrom_ext, .parallel = TRUE)
-      message("Metadata is collected from sqMass files.")
-      return_index <- "chromatogramIndex"
-      function_param_input$return_index <- return_index
-    }
+  } else {
+    mzPntrs <- readRDS( file.path(getwd(), "mzPntrs.rds") )
+    return_index <- "chromatogramIndex"
+    function_param_input$return_index <- return_index
   }
   
-  ######### Get Precursors from the query and respectve chromatogram indices. ######
-  tictoc::tic()
-  oswFiles <- getOswFiles(dataPath, filenames,  maxFdrQuery = maxFdrQuery, analyteFDR = analyteFDR,
-                          oswMerged = oswMerged, analytes = NULL, runType = runType, analyteInGroupLabel = analyteInGroupLabel, 
-                          identifying = identifying, identifying.transitionPEPfilter=identifying.transitionPEPfilter, mzPntrs = mzPntrs)
-  exec_time <- tictoc::toc(quiet = TRUE)
-  message( sprintf("[DIAlignR::alignTargetedruns::getOswFiles(#R170)] Extracting OSW results information for %s runs took %s seconds",dim(filenames)[1], round(exec_time$toc - exec_time$tic, 3) ))
+  if ( !file.exists(file.path(getwd(), "oswFiles.rds")) ){
+    tictoc::tic()
+    oswFiles <- getOswFiles(dataPath, filenames,  maxFdrQuery = maxFdrQuery, analyteFDR = analyteFDR,
+                            oswMerged = oswMerged, analytes = NULL, runType = runType, analyteInGroupLabel = analyteInGroupLabel, 
+                            identifying = identifying, identifying.transitionPEPfilter=identifying.transitionPEPfilter, mzPntrs = mzPntrs)
+    exec_time <- tictoc::toc(quiet = TRUE)
+    message( sprintf("[DIAlignR::alignTargetedruns::getOswFiles(#R170)] Extracting OSW results information for %s runs took %s seconds",dim(filenames)[1], round(exec_time$toc - exec_time$tic, 3) ))
+    ## Save oswFiles object as rds object
+    saveRDS( oswFiles, file.path(getwd(), "oswFiles.rds") )
+  } else {
+    oswFiles <- readRDS( file.path(getwd(), "oswFiles.rds") )
+  }
   
+  ## Get Reference Analytes
   refAnalytes <- getAnalytesName(oswFiles, analyteFDR, commonAnalytes = FALSE)
   if(!is.null(analytes)){
     analytesFound <- intersect(analytes, refAnalytes)
