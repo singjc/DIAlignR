@@ -41,7 +41,7 @@ analyte_align_par_func <- function( oswdata, mzPntrs, function_param_input ){
   # Get XIC_group from reference run. if missing, go to next analyte.
   ref <- names(function_param_input$runs)[refRunIdx]
   exps <- setdiff(names(function_param_input$runs), ref)
-  chromIndices <- selectChromIndices(oswdata, runname = ref, analyte = analyte, return_index=return_index )
+  chromIndices <- selectChromIndices(oswdata, runname = ref, analyte = analyte, return_index=function_param_input$return_index )
   
   if(is.null(chromIndices)){
     warn_msg <- paste0("Chromatogram indices for ", analyte, " are missing in ref run ", function_param_input$runs[ref])
