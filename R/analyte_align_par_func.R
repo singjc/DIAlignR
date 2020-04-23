@@ -59,41 +59,91 @@ analyte_align_par_func <- function( oswdata, mzPntrs, function_param_input ){
   
   oswdata$run_id_bind <- oswdata$run_id
   
-  oswdata %>%
-    dplyr::slice( rep(which(run_id==ref & m_score==min(m_score)), each = n() ) ) %>%
-    dplyr::mutate( run_id_bind=oswdata$run_id ) %>%
-    dplyr::bind_rows( oswdata ) %>%
-    dplyr::mutate( run_pair = paste(run_id_bind,ref,sep='_'),
-                   run_type = ifelse(run_id==ref, "ref", "eXp")
-    ) %>%
-    dplyr::group_by( run_pair ) %>%
-    tidyr::nest() %>%
-    dplyr::filter( run_pair != paste(ref,ref, sep="_") ) %>%
-    dplyr::mutate( XICs.ref = list(XICs.ref),
-                   mzPntrs = list(mzPntrs),
-                   function_param_input = list(function_param_input) ) -> oswdata_runpairs
+  oswdata_runpairs <- tryCatch( expr = {
+    oswdata %>%
+      dplyr::group_by( run_id ) %>%
+      dplyr::slice( rep(which(run_id==ref & m_score==min(m_score)), each = nrow(oswdata) ) ) %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate( run_id_bind=oswdata$run_id ) %>%
+      dplyr::bind_rows( oswdata ) %>%
+      dplyr::mutate( run_pair = paste(run_id_bind,ref,sep='_'),
+                     run_type = ifelse(run_id==ref, "ref", "eXp")
+      ) %>%
+      dplyr::group_by( run_pair ) %>%
+      tidyr::nest() %>%
+      dplyr::filter( run_pair != paste(ref,ref, sep="_") ) %>%
+      dplyr::mutate( XICs.ref = list(XICs.ref),
+                     mzPntrs = list(mzPntrs),
+                     function_param_input = list(function_param_input) ) -> oswdata_runpairs
+  },
+  error = function(e){
+    warning(sprintf("There was the following error wwhile setting up oswdata_runpairs for parallel mapping:\n%s", e$message))
+    oswdata_runpairs <- NULL
+    return(  oswdata_runpairs )
+  })
+  
   
   ## Set-Up for multiple processing
   future::plan( list(future::tweak( future::multiprocess, workers=(future::availableCores()-10) )) )
+  tmp_catch <- tryCatch( expr = {
+    oswdata_runpairs %>%
+      dplyr::mutate( runpair_alignment = furrr::future_pmap( list(data, XICs.ref, mzPntrs, function_param_input), ( ~pairwise_align_par_func(oswdata_runpair_data = data, XICs.ref = XICs.ref, mzPntrs = mzPntrs, function_param_input = function_param_input ) ) ) ) -> tmp
+    tmp_catch <- list(data=tmp, alignment_status="Success") 
+  },
+  error = function(e){
+    error_msg <- sprintf("There was the following error during parallel processing on osw_runpairs using furrr::future_pmap:\n%s", e$message)
+    warning( error_msg )
+    tmp <- NULL
+    return( list(data=tmp, alignment_status=error_msg) )
+  })
   
-  oswdata_runpairs %>%
-    dplyr::mutate( runpair_alignment = furrr::future_pmap( list(data, XICs.ref, mzPntrs, function_param_input), ( ~pairwise_align_par_func(oswdata_runpair_data = data, XICs.ref = XICs.ref, mzPntrs = mzPntrs, function_param_input = function_param_input ) ) ) ) -> tmp
+  tmp <- tmp_catch$data
+  alignment_log <- tmp_catch$alignment_status
+  
   
   ## Explicitly close multisession workers by switching plan
   future::plan(future::sequential)
   
-  analyte_alignment_results <- data.table::rbindlist(tmp$runpair_alignment)
-  
+  ## Get Reference data
   oswdata %>%
+    dplyr::group_by( run_id ) %>%
     dplyr::filter( run_id==ref & m_score==min(m_score) ) %>%
+    dplyr::ungroup() %>%
     dplyr::select( run_id, transition_group_id, filename, RT, leftWidth, rightWidth, Intensity, peak_group_rank, contains("ms2_m_score"), m_score ) %>%
     dplyr::mutate( run_type = "ref",
                    alignment_run_id_pair = NaN,
                    alignment_run_file_pair = NaN,
-                   RTo = RT ) -> ref_data
+                   RTo = RT,
+                   leftWidtho = leftWidth,
+                   rightWidtho = rightWidth,
+                   Intensityo = Intensity ) -> ref_data
+  
+  if ( !is.null(tmp) ){
+  analyte_alignment_results <- data.table::rbindlist(tmp$runpair_alignment)
   
   analyte_alignment_results <- data.table::rbindlist( list(ref_data, analyte_alignment_results), use.names = TRUE, fill = TRUE )
-  analyte_alignment_results %>% dplyr::select( transition_group_id, filename, run_id, run_type, alignment_run_id_pair, alignment_run_file_pair, RTo, RT, leftWidth, rightWidth, Intensity, peak_group_rank, contains("ms2_m_score"), m_score ) -> analyte_alignment_results
+  analyte_alignment_results %>% dplyr::select( transition_group_id, filename, run_id, run_type, alignment_run_id_pair, alignment_run_file_pair, RTo, leftWidtho, rightWidtho, Intensityo, RT, leftWidth, rightWidth, Intensity, peak_group_rank, contains("ms2_m_score"), m_score ) -> analyte_alignment_results
+  analyte_alignment_results$alignment_log <- alignment_log
+  } else {
+    oswdata %>%
+      dplyr::group_by( run_id ) %>%
+      dplyr::filter( m_score==min(m_score) ) %>%
+      dplyr::slice( 1 ) %>%
+      dplyr::select( run_id, transition_group_id, filename, RT, leftWidth, rightWidth, Intensity, peak_group_rank, contains("ms2_m_score"), m_score ) %>%
+      dplyr::mutate( run_type = if ( run_id==ref) "ref" else "exp",
+                     alignment_run_id_pair = if ( run_id==ref) "NaN" else paste(ref, run_id, sep='_'),
+                     alignment_run_file_pair = if ( run_id==ref) "NaN" else paste(ref_data$filename, filename, sep='_'),
+                     RTo = RT,
+                     leftWidtho = leftWidth,
+                     rightWidtho = rightWidth,
+                     Intensityo = Intensity ) -> analyte_alignment_results
+    analyte_alignment_results$RT <- NaN
+    analyte_alignment_results$leftWidth <- NaN
+    analyte_alignment_results$rightWidth <- NaN
+    analyte_alignment_results$Intensity <- NaN
+    analyte_alignment_results %>% dplyr::select( transition_group_id, filename, run_id, run_type, alignment_run_id_pair, alignment_run_file_pair, RTo, leftWidtho, rightWidtho, Intensityo, RT, leftWidth, rightWidth, Intensity, peak_group_rank, contains("ms2_m_score"), m_score ) -> analyte_alignment_results
+    analyte_alignment_results$alignment_log <- alignment_log
+  }
   
   return( analyte_alignment_results )
 }

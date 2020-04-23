@@ -58,17 +58,17 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c("transition_group_id", "
 #'
 #' @export
 alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroupLabel = FALSE, oswMerged = TRUE,
-                              runs = NULL, analytes = NULL, nameCutPattern = "(.*)(/)(.*)", chrom_ext=".chrom.mzML",
-                              maxFdrQuery = 0.05, maxFdrLoess = 0.01, analyteFDR = 0.01,
-                              spanvalue = 0.1, runType = "DIA_Proteomics",
-                              normalization = "mean", simMeasure = "dotProductMasked",
-                              XICfilter = "sgolay", SgolayFiltOrd = 4, SgolayFiltLen = 9,
-                              goFactor = 0.125, geFactor = 40,
-                              cosAngleThresh = 0.3, OverlapAlignment = TRUE,
-                              dotProdThresh = 0.96, gapQuantile = 0.5,
-                              hardConstrain = FALSE, samples4gradient = 100,
-                              samplingTime = 3.4,  RSEdistFactor = 3.5, saveFiles = FALSE,
-                              identifying = FALSE, identifying.transitionPEPfilter=0.6, keep_all_detecting=TRUE, mzPntrs = NULL){
+                                  runs = NULL, analytes = NULL, nameCutPattern = "(.*)(/)(.*)", chrom_ext=".chrom.mzML",
+                                  maxFdrQuery = 0.05, maxFdrLoess = 0.01, analyteFDR = 0.01,
+                                  spanvalue = 0.1, runType = "DIA_Proteomics",
+                                  normalization = "mean", simMeasure = "dotProductMasked",
+                                  XICfilter = "sgolay", SgolayFiltOrd = 4, SgolayFiltLen = 9,
+                                  goFactor = 0.125, geFactor = 40,
+                                  cosAngleThresh = 0.3, OverlapAlignment = TRUE,
+                                  dotProdThresh = 0.96, gapQuantile = 0.5,
+                                  hardConstrain = FALSE, samples4gradient = 100,
+                                  samplingTime = 3.4,  RSEdistFactor = 3.5, saveFiles = FALSE,
+                                  identifying = FALSE, identifying.transitionPEPfilter=0.6, keep_all_detecting=TRUE, mzPntrs = NULL){
   
   if ( F ){
     library(DIAlignR)
@@ -212,15 +212,21 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     dplyr::mutate( mzPntrs = list(mzPntrs),
                    function_param_input = list(function_param_input) ) -> masterTbl
   
-   
   
-
+  
+  
   message("Performing reference-based alignment.")
   start_time <- Sys.time()
-  masterTbl %>%
-    dplyr::mutate( alignment_results = purrr::pmap( list(data, mzPntrs, function_param_input), ~analyte_align_par_func(oswdata = data, mzPntrs = mzPntrs, function_param_input = function_param_input) ) ) -> tmp
+  alignment_results <- tryCatch( expr = {
+    masterTbl %>%
+      dplyr::mutate( alignment_results = purrr::pmap( list(data, mzPntrs, function_param_input), ~analyte_align_par_func(oswdata = data, mzPntrs = mzPntrs, function_param_input = function_param_input) ) ) -> tmp
+    
+    alignment_results <- data.table::rbindlist(tmp$alignment_results, fill = TRUE)
+  }, 
+  error = function(e){
+    return(e$message)
+  })
   
-  alignment_results <- data.table::rbindlist(tmp$alignment_results, fill = TRUE)
   
   # Report the execution time for hybrid alignment step.
   end_time <- Sys.time()
