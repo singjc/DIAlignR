@@ -241,7 +241,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     alignment_results <- data.table::rbindlist(tmp$alignment_results, fill = TRUE)
   }, 
   error = function(e){
-    return(e$message)
+    return( data.table::as.data.table(e$message) )
   })
   
   
