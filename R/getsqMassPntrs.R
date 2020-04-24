@@ -8,9 +8,10 @@
 #' @export
 getsqMassPntrs <- function( dataPath, runs, nameCutPattern = "(.*)(/)(.*)", chrom_ext=".chrom.sqMass", .parallel=TRUE  ){
   
-  getMZandChromHead <- function( data=NULL, chromatogram_file_i=NULL, run=NULL , sql_query=NULL, mzPntrs=NULL ){
-    if ( !is.null(data) ){
-      data <- data[[1]]
+  getMZandChromHead <- function( data_table=NULL, chromatogram_file_i=NULL, run=NULL , sql_query=NULL, mzPntrs=NULL ){
+    if ( !is.null(data_table) ){
+      # print( (data_table) )
+      data <- data_table[[1]]
       chromatogram_file_i <- data$chromFiles
       run <- data$run_id
       sql_query <- data$sql_query
@@ -56,7 +57,7 @@ FROM CHROMATOGRAM
   chromFiles <- list.files(dataPath, pattern = ".sqMass", recursive = T, full.names = T)
   names(chromFiles) <- gsub( chrom_ext, "", basename(chromFiles))
   
-  ## Get filenames from osw files and check if names are consistent between osw and mzML files. ######
+  ## Get filenames from osw files and check if names are consistent between osw and mzML files. 
   filenames <- getRunNames( dataPath, oswMerged=TRUE, nameCutPattern = nameCutPattern, chrom_ext = chrom_ext )
   filenames <- filenames[filenames$runs %in% runs,]
   
@@ -92,16 +93,47 @@ FROM CHROMATOGRAM
       dplyr::group_by( runs ) %>%
       tidyr::nest() -> masterTbl
     
-    ## Set-Up for multiple processing
-    future::plan( list(future::tweak( future::multicore, workers=(future::availableCores()-10) )) )
+    threads <- as.integer(future::availableCores()-2)
     
-    masterTbl%>%
-      dplyr::mutate( mzPntrs = furrr::future_pmap( list(data), ~getMZandChromHead( data=data ) ) ) -> tmp
+    # worker_id <- rep(1:threads, length.out = nrow(masterTbl))
+    # masterTbl <- bind_cols(tibble(worker_id), masterTbl)
+    
+    ## Set-Up for multiple processing
+    future::plan( list(future::tweak( future::multisession, workers=threads )) )
+    
+    # # install.packages("devtools")
+    # # devtools::install_github("hadley/multidplyr")
+    # cluster <- multidplyr::new_cluster( n = threads )
+    # 
+    # by_worker_id <- masterTbl %>%
+    #   dplyr::group_by( worker_id ) %>%
+    #   multidplyr::partition(., cluster = cluster)
+    # 
+    # 
+    # # Assign libraries
+    # multidplyr::cluster_library(cluster = cluster, packages = "dplyr")
+    # # multidplyr::cluster_library("mstools") 
+    # # Assign values (use this to load functions or data to each core)
+    # multidplyr::cluster_copy(cluster = cluster, names = "getMZandChromHead", env = globalenv() )
+    # 
+    
+    
+    # tictoc::tic()
+    # by_worker_id %>%
+    # dplyr::mutate( mzPntrs = purrr::pmap( list(data), ~getMZandChromHead( data_table =data ), .options = furrr::future_options(globals = "getMZandChromHead", scheduling = 2 )) ) %>%
+    #   collect() %>% # Special collect() function to recombine partitions
+    #   as_tibble() -> tmp
+    # tictoc::toc()
+    # rm(by_worker_id)
+    # gc()
+    tictoc::tic()
+    masterTbl %>%
+      dplyr::mutate( mzPntrs = furrr::future_pmap( list(data), ~getMZandChromHead( data_table = data ), .options = furrr::future_options(globals = "getMZandChromHead", scheduling = 2 )) ) -> tmp
+    tictoc::toc()
     
     ## Explicitly close multisession workers by switching plan
     future::plan(future::sequential)
-    ## run garbage collector
-    gc()
+    
     
     mzPntrs <- tmp$mzPntrs
     names(mzPntrs) <- tidyr::unnest(masterTbl, cols="data") %>% dplyr::ungroup() %>% dplyr::select( run_id ) %>% as.matrix() %>% as.character()

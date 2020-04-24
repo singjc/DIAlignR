@@ -77,6 +77,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     library(zoo)
     # dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/lower_product_mz_threshold/DIAlignR_Analysis/data"
     dataPath <- "/media/roestlab/Data1/User/JustinS/phospho_enriched_u2os/Georges_Results/data"
+    dataPath <- "/home/singjust/projects/def-hroest/data/phospho_enriched_U2OS/singjust_results/Georges_Results/data"
     dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/George_lib_repeat2/DIAlignR_Analysis/data/"
     alignType = "hybrid"; analyteInGroupLabel = FALSE; oswMerged = TRUE;
     runs = NULL; analytes = NULL; nameCutPattern = "(.*)(/)(.*)"; chrom_ext=".chrom.sqMass"
@@ -245,11 +246,49 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     dplyr::mutate( mzPntrs = list(mzPntrs),
                    function_param_input = list(function_param_input) ) -> masterTbl
   
- #masterTbl <- masterTbl[c(5), ] 
+  # masterTbl_old <- masterTbl
+ masterTbl <- masterTbl_old[c(sample(seq(1, dim(masterTbl_old)[1]), 48)), ] 
   
   
   message("Performing reference-based alignment.")
   start_time <- Sys.time()
+  ## Set-Up for multiple processing
+  #future::plan( list(future::tweak( future::multicore, workers=10L )) )
+  # cl <- future::makeClusterPSOCK(future::availableCores()-30)
+  # future::plan(future::cluster, workers = cl)
+  
+  ## Specify number of workers
+  threads <- as.integer(future::availableCores()-4)
+  ## Generate worker_id
+  worker_id <- rep(1:threads, length.out = nrow(masterTbl))
+  ## Add worker ID to data to process
+  masterTbl <- bind_cols(tibble(worker_id), masterTbl)
+  
+  # install.packages("devtools")
+  # devtools::install_github("hadley/multidplyr")
+  ## Start clusters of n workers
+  cluster <- multidplyr::new_cluster( n = threads )
+  ## Partition data to send to different workers
+  by_worker_id <- masterTbl %>%
+    dplyr::group_by( worker_id ) %>%
+    multidplyr::partition(., cluster = cluster)
+
+
+  # Assign libraries
+  multidplyr::cluster_library(cluster = cluster, packages = "dplyr")
+  multidplyr::cluster_library(cluster = cluster, packages = "DIAlignR")
+  # Assign values (use this to load functions or data to each core)
+  multidplyr::cluster_copy(cluster = cluster, names = "getMZandChromHead", env = globalenv() )
+  
+  tictoc::tic()
+  by_worker_id %>%
+    dplyr::mutate( alignment_results = purrr::pmap( list(data, mzPntrs, function_param_input), ~analyte_align_par_func(oswdata = data, mzPntrs = mzPntrs, function_param_input = function_param_input) ) ) %>%
+    collect() %>% # Special collect() function to recombine partitions
+    as_tibble() -> tmp
+  tictoc::toc()
+  rm(by_worker_id)
+  gc()
+  
   alignment_results <- tryCatch( expr = {
     masterTbl %>%
       dplyr::mutate( alignment_results = purrr::pmap( list(data, mzPntrs, function_param_input), ~analyte_align_par_func(oswdata = data, mzPntrs = mzPntrs, function_param_input = function_param_input) ) ) -> tmp
@@ -260,6 +299,9 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     return( data.table::as.data.table(e$message) )
   })
   
+  ## Explicitly close multisession workers by switching plan
+  ##future::plan(future::sequential)
+  # parallel::stopCluster(cl)
   
   # Report the execution time for hybrid alignment step.
   end_time <- Sys.time()
