@@ -58,6 +58,7 @@ analyte_align_par_func <- function( oswdata, function_param_input ){
     return( dummy_dt ) #TODO: Return a table maybe?
   } else {
     tictoc::tic()
+    mzPntrs <- getmzPntrs_on_the_fly( db = function_param_input$cached_mzPntrsdb, runs = ref, chromIndices = chromIndices )
     XICs.ref <- extractXIC_group(mz = mzPntrs[[ref]]$mz, chromIndices = chromIndices,
                                  XICfilter = function_param_input$XICfilter, SgolayFiltOrd = function_param_input$SgolayFiltOrd,
                                  SgolayFiltLen = function_param_input$SgolayFiltLen)
@@ -82,7 +83,7 @@ analyte_align_par_func <- function( oswdata, function_param_input ){
       tidyr::nest() %>%
       dplyr::filter( run_pair != paste(ref,ref, sep="_") ) %>%
       dplyr::mutate( XICs.ref = list(XICs.ref),
-                     mzPntrs = list( purrr::map( run_pair, function( run_pair_i ){ mzPntrs[ which( grepl(gsub("_","|", run_pair_i), names(mzPntrs)) ) ] } )),
+                     # mzPntrs = list( purrr::map( run_pair, function( run_pair_i ){ mzPntrs[ which( grepl(gsub("_","|", run_pair_i), names(mzPntrs)) ) ] } )),
                      function_param_input = list(function_param_input) ) -> oswdata_runpairs
     
     
@@ -102,7 +103,7 @@ analyte_align_par_func <- function( oswdata, function_param_input ){
   
   tmp_catch <- tryCatch( expr = {
     oswdata_runpairs %>%
-      dplyr::mutate( runpair_alignment = purrr::pmap( list(data, XICs.ref, mzPntrs, function_param_input), ( ~pairwise_align_par_func(oswdata_runpair_data = data, XICs.ref = XICs.ref, mzPntrs = mzPntrs, function_param_input = function_param_input ) ) ) ) -> tmp
+      dplyr::mutate( runpair_alignment = purrr::pmap( list(data, XICs.ref, function_param_input), ( ~pairwise_align_par_func(oswdata_runpair_data = data, XICs.ref = XICs.ref, function_param_input = function_param_input ) ) ) ) -> tmp
     tmp_catch <- list(data=tmp, alignment_status="Success") 
   },
   error = function(e){

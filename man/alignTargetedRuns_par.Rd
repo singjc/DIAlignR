@@ -38,6 +38,7 @@ alignTargetedRuns_par(
   identifying.transitionPEPfilter = 0.6,
   keep_all_detecting = TRUE,
   mzPntrs = NULL,
+  cached_mzPntrsdb = NULL,
   n_workers = NULL
 )
 }

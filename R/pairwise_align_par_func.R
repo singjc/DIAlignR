@@ -1,9 +1,9 @@
 #' @export
-pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, mzPntrs, function_param_input ){
+pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_param_input ){
   
   oswdata_runpair_data <- oswdata_runpair_data[[1]]
   XICs.ref <- XICs.ref[[1]]
-  mzPntrs <- mzPntrs[[1]]
+  # mzPntrs <- mzPntrs[[1]]
   function_param_input <- function_param_input[[1]]
   
   eXp <- subset( oswdata_runpair_data, subset = run_type=="eXp", select = run_id ) %>% unique() %>% as.character()
@@ -25,6 +25,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, mzPntrs, fu
       chromIndices <- selectChromIndices(oswdata, runname = ref, analyte = analyte, product_mz_filter_list=procuct_mz_intersect, return_index=function_param_input$return_index, keep_all_detecting=function_param_input$keep_all_detecting)
       chromIndices <- selectChromIndices(oswdata, runname = ref, analyte = analyte, product_mz_filter_list=procuct_mz_intersect, return_index=function_param_input$return_index, keep_all_detecting=function_param_input$keep_all_detecting)
       tictoc::tic()
+      mzPntrs <- getmzPntrs_on_the_fly( db = function_param_input$cached_mzPntrsdb, runs = ref, chromIndices = chromIndices )
       XICs.ref <- extractXIC_group(mz = mzPntrs[[ref]]$mz, chromIndices = chromIndices,
                                    XICfilter = XICfilter, SgolayFiltOrd = SgolayFiltOrd,
                                    SgolayFiltLen = SgolayFiltLen)
@@ -47,6 +48,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, mzPntrs, fu
   
   if(!is.null(chromIndices)){
     tictoc::tic()
+    mzPntrs <- getmzPntrs_on_the_fly( db = function_param_input$cached_mzPntrsdb, runs = eXp, chromIndices = chromIndices )
     XICs.eXp <- extractXIC_group(mzPntrs[[eXp]]$mz, chromIndices)
     ## End timer
     exec_time <- tictoc::toc(quiet = T)

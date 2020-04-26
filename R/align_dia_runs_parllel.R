@@ -68,7 +68,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
                                   dotProdThresh = 0.96, gapQuantile = 0.5,
                                   hardConstrain = FALSE, samples4gradient = 100,
                                   samplingTime = 3.4,  RSEdistFactor = 3.5, saveFiles = FALSE,
-                                  identifying = FALSE, identifying.transitionPEPfilter=0.6, keep_all_detecting=TRUE, mzPntrs = NULL, n_workers=NULL){
+                                  identifying = FALSE, identifying.transitionPEPfilter=0.6, keep_all_detecting=TRUE, mzPntrs = NULL, cached_mzPntrsdb=NULL, n_workers=NULL){
   
   if ( F ){
     library(DIAlignR)
@@ -76,9 +76,9 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     library(dplyr)
     library(zoo)
     # dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/lower_product_mz_threshold/DIAlignR_Analysis/data"
-    dataPath <- "/media/roestlab/Data1/User/JustinS/phospho_enriched_u2os/Georges_Results/data"
+    # dataPath <- "/media/roestlab/Data1/User/JustinS/phospho_enriched_u2os/Georges_Results/data"
     # dataPath <- "/home/singjust/projects/def-hroest/data/phospho_enriched_U2OS/singjust_results/Georges_Results/data"
-    # dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/George_lib_repeat2/DIAlignR_Analysis/data/"
+    dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/George_lib_repeat2/DIAlignR_Analysis/data/"
     alignType = "hybrid"; analyteInGroupLabel = FALSE; oswMerged = TRUE;
     runs = NULL; analytes = NULL; nameCutPattern = "(.*)(/)(.*)"; chrom_ext=".chrom.sqMass"
     # runs <- c('chludwig_K150309_007b_SW_1_6', 'chludwig_K150309_008_SW_1_4', 'chludwig_K150309_009_SW_1_3', 'chludwig_K150309_010_SW_1_2', 'chludwig_K150309_011_SW_1_1point5', 'chludwig_K150309_012_SW_1_1', 'chludwig_K150309_013_SW_0')
@@ -101,6 +101,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     i=4;
     n_workers=parallel::detectCores() - 16
     analyteFDR = 1
+    cached_mzPntrsdb="cached_chromatogram_data.mzPntrs"
     analyte<- "ANS(Phospho)SPTTNIDHLK(Label:13C(6)15N(2))_2"
     analyte <- "AGLDNVDAES(Phospho)K(Label:13C(6)15N(2))_2" # Apparently belongs to two peaks
     eXp <- "run11"
@@ -142,7 +143,8 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
                                hardConstrain = hardConstrain, samples4gradient = samples4gradient,
                                samplingTime = samplingTime,  RSEdistFactor = RSEdistFactor, saveFiles = saveFiles,
                                identifying = identifying, identifying.transitionPEPfilter=identifying.transitionPEPfilter, keep_all_detecting=keep_all_detecting,
-                               n_workers=n_workers) 
+                               n_workers=n_workers,
+                               cached_mzPntrsdb=cached_mzPntrsdb) 
   
   # Check if filter length is odd for Savitzky-Golay filter.
   if( (SgolayFiltLen %% 2) != 1){
@@ -165,45 +167,51 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   function_param_input$runs <- runs
   function_param_input$filenames <- filenames
   
-  if ( !file.exists(file.path(getwd(), "mzPntrs.rds")) ){
-
-    ## If using mzML files, cache data
-    if ( grepl(".*mzML", chrom_ext) ){
-      if(is.null(mzPntrs)){
-        ######### Collect pointers for each mzML file. #######
-        runs <- filenames$runs
-        names(runs) <- rownames(filenames)
-        # Collect all the pointers for each mzML file.
-        message("Collecting metadata from mzML files.")
-        # mzPntrs <- getMZMLpointers(dataPath, runs)
-        mzPntrs <- getmzPntrs(dataPath, runs)
-        message("Metadata is collected from mzML files.")
-        return_index <- "chromatogramIndex"
-        function_param_input$return_index <- return_index
-        ## Save rds object
-        saveRDS( mzPntrs, file.path(getwd(), "mzPntrs.rds") )
+  if ( is.null(cached_mzPntrsdb) ){
+    if ( !file.exists(file.path(getwd(), "mzPntrs.rds")) ){
+      
+      ## If using mzML files, cache data
+      if ( grepl(".*mzML", chrom_ext) ){
+        if(is.null(mzPntrs)){
+          ######### Collect pointers for each mzML file. #######
+          runs <- filenames$runs
+          names(runs) <- rownames(filenames)
+          # Collect all the pointers for each mzML file.
+          message("Collecting metadata from mzML files.")
+          # mzPntrs <- getMZMLpointers(dataPath, runs)
+          mzPntrs <- getmzPntrs(dataPath, runs)
+          message("Metadata is collected from mzML files.")
+          return_index <- "chromatogramIndex"
+          function_param_input$return_index <- return_index
+          ## Save rds object
+          saveRDS( mzPntrs, file.path(getwd(), "mzPntrs.rds") )
+        }
+      } else if ( grepl(".*sqMass", chrom_ext) ){
+        if(is.null(mzPntrs)){
+          ######### Collect pointers for each mzML file. #######
+          runs <- filenames$runs
+          names(runs) <- rownames(filenames)
+          # Collect all the pointers for each mzML file.
+          message("Collecting metadata from sqMass files.")
+          # mzPntrs <- getMZMLpointers(dataPath, runs)
+          mzPntrs <- DIAlignR::getsqMassPntrs(dataPath, runs, nameCutPattern = nameCutPattern, chrom_ext = chrom_ext, .parallel = FALSE)
+          message("Metadata is collected from sqMass files.")
+          return_index <- "chromatogramIndex"
+          function_param_input$return_index <- return_index
+          ## Save rds object
+          saveRDS( mzPntrs, file.path(getwd(), "mzPntrs.rds") )
+        }
       }
-    } else if ( grepl(".*sqMass", chrom_ext) ){
-      if(is.null(mzPntrs)){
-        ######### Collect pointers for each mzML file. #######
-        runs <- filenames$runs
-        names(runs) <- rownames(filenames)
-        # Collect all the pointers for each mzML file.
-        message("Collecting metadata from sqMass files.")
-        # mzPntrs <- getMZMLpointers(dataPath, runs)
-        mzPntrs <- DIAlignR::getsqMassPntrs(dataPath, runs, nameCutPattern = nameCutPattern, chrom_ext = chrom_ext, .parallel = FALSE)
-        message("Metadata is collected from sqMass files.")
-        return_index <- "chromatogramIndex"
-        function_param_input$return_index <- return_index
-        ## Save rds object
-        saveRDS( mzPntrs, file.path(getwd(), "mzPntrs.rds") )
-      }
+    } else {
+      message("Reading in a stored mzPntrs.rds object: ", appendLF=FALSE)
+      tictoc::tic()
+      mzPntrs <- readRDS( file.path(getwd(), "mzPntrs.rds") )
+      tictoc::toc()
+      return_index <- "chromatogramIndex"
+      function_param_input$return_index <- return_index
     }
   } else {
-    message("Reading in a stored mzPntrs.rds object: ", appendLF=FALSE)
-    tictoc::tic()
-    mzPntrs <- readRDS( file.path(getwd(), "mzPntrs.rds") )
-    tictoc::toc()
+    message("There is a cached mzPntrs database file supplied.")
     return_index <- "chromatogramIndex"
     function_param_input$return_index <- return_index
   }
@@ -224,16 +232,16 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     tictoc::toc()
   }
   
-  ## Get Reference Analytes
-  refAnalytes <- getAnalytesName(oswFiles, analyteFDR, commonAnalytes = FALSE)
-  if(!is.null(analytes)){
-    analytesFound <- intersect(analytes, refAnalytes)
-    analytesNotFound <- setdiff(analytes, analytesFound)
-    if(length(analytesNotFound)>0){
-      message(paste(analytesNotFound, "not found."))
-    }
-    refAnalytes <- analytesFound
-  }
+  # ## Get Reference Analytes
+  # refAnalytes <- getAnalytesName(oswFiles, analyteFDR, commonAnalytes = FALSE)
+  # if(!is.null(analytes)){
+  #   analytesFound <- intersect(analytes, refAnalytes)
+  #   analytesNotFound <- setdiff(analytes, analytesFound)
+  #   if(length(analytesNotFound)>0){
+  #     message(paste(analytesNotFound, "not found."))
+  #   }
+  #   refAnalytes <- analytesFound
+  # }
   
   oswFiles_dt <- data.table::rbindlist(oswFiles, use.names = TRUE, fill = TRUE, idcol = "run_id")
   oswFiles_dt$analytes <- oswFiles_dt$transition_group_id
@@ -246,11 +254,11 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     dplyr::group_by( analytes ) %>%
     tidyr::nest() %>%
     dplyr::mutate( #mzPntrs = list(mzPntrs),
-                   function_param_input = list(function_param_input) ) -> masterTbl
+      function_param_input = list(function_param_input) ) -> masterTbl
   
- masterTbl_old <- masterTbl
- masterTbl <- masterTbl_old[c(sample(seq(1, dim(masterTbl_old)[1]), 48)), ]
-  
+  # masterTbl_old <- masterTbl
+  # masterTbl <- masterTbl_old[c(sample(seq(1, dim(masterTbl_old)[1]), 48)), ]
+  # 
   
   message("Performing reference-based alignment.")
   start_time <- Sys.time()
@@ -279,21 +287,21 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     dplyr::group_by( worker_id ) %>%
     multidplyr::partition(., cluster = cluster)
   tictoc:::toc()
-
+  
   message("Copying and Loading necessary global functions and libraries to each worker: ", appendLF = FALSE)
   tictoc::tic()
   # Assign libraries
   multidplyr::cluster_library(cluster = cluster, packages = "dplyr")
   multidplyr::cluster_library(cluster = cluster, packages = "DIAlignR")
   # Assign values (use this to load functions or data to each core)
-  multidplyr::cluster_copy(cluster = cluster, names = "mzPntrs", env = globalenv() )
+  # multidplyr::cluster_copy(cluster = cluster, names = "mzPntrs", env = globalenv() )
   tictoc:::toc()
   
   message( "Collecting Results" )
   alignment_results <- tryCatch( expr = {
     # masterTbl %>%
-    #   dplyr::mutate( alignment_results = purrr::pmap( list(data, mzPntrs, function_param_input), ~analyte_align_par_func(oswdata = data, mzPntrs = mzPntrs, function_param_input = function_param_input) ) ) -> tmp
-    # 
+    #   dplyr::mutate( alignment_results = purrr::pmap( list(data, function_param_input), ~analyte_align_par_func(oswdata = data, function_param_input = function_param_input) ) ) -> tmp
+
     message( "Starting alignment for each worker." )
     by_worker_id %>%
       dplyr::mutate( alignment_results = purrr::pmap( list(data, function_param_input), ~analyte_align_par_func(oswdata = data, function_param_input = function_param_input) ) ) %>%
