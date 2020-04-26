@@ -76,8 +76,11 @@ analyte_align_par_func <- function( oswdata, mzPntrs, function_param_input ){
       tidyr::nest() %>%
       dplyr::filter( run_pair != paste(ref,ref, sep="_") ) %>%
       dplyr::mutate( XICs.ref = list(XICs.ref),
-                     mzPntrs = list(mzPntrs),
+                     mzPntrs = list( purrr::map( run_pair, function( run_pair_i ){ mzPntrs[ which( grepl(gsub("_","|", run_pair_i), names(mzPntrs)) ) ] } )),
                      function_param_input = list(function_param_input) ) -> oswdata_runpairs
+    
+    
+    
   },
   error = function(e){
     warning(sprintf("There was the following error while setting up oswdata_runpairs for parallel mapping:\n%s", e$message))

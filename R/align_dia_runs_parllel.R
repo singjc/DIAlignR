@@ -68,7 +68,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
                                   dotProdThresh = 0.96, gapQuantile = 0.5,
                                   hardConstrain = FALSE, samples4gradient = 100,
                                   samplingTime = 3.4,  RSEdistFactor = 3.5, saveFiles = FALSE,
-                                  identifying = FALSE, identifying.transitionPEPfilter=0.6, keep_all_detecting=TRUE, mzPntrs = NULL){
+                                  identifying = FALSE, identifying.transitionPEPfilter=0.6, keep_all_detecting=TRUE, mzPntrs = NULL, n_workers=NULL){
   
   if ( F ){
     library(DIAlignR)
@@ -76,8 +76,8 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     library(dplyr)
     library(zoo)
     # dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/lower_product_mz_threshold/DIAlignR_Analysis/data"
-    dataPath <- "/media/roestlab/Data1/User/JustinS/phospho_enriched_u2os/Georges_Results/data"
-    dataPath <- "/home/singjust/projects/def-hroest/data/phospho_enriched_U2OS/singjust_results/Georges_Results/data"
+    # dataPath <- "/media/roestlab/Data1/User/JustinS/phospho_enriched_u2os/Georges_Results/data"
+    # dataPath <- "/home/singjust/projects/def-hroest/data/phospho_enriched_U2OS/singjust_results/Georges_Results/data"
     dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/George_lib_repeat2/DIAlignR_Analysis/data/"
     alignType = "hybrid"; analyteInGroupLabel = FALSE; oswMerged = TRUE;
     runs = NULL; analytes = NULL; nameCutPattern = "(.*)(/)(.*)"; chrom_ext=".chrom.sqMass"
@@ -140,7 +140,8 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
                                dotProdThresh = dotProdThresh, gapQuantile = gapQuantile,
                                hardConstrain = hardConstrain, samples4gradient = samples4gradient,
                                samplingTime = samplingTime,  RSEdistFactor = RSEdistFactor, saveFiles = saveFiles,
-                               identifying = identifying, identifying.transitionPEPfilter=identifying.transitionPEPfilter, keep_all_detecting=keep_all_detecting) 
+                               identifying = identifying, identifying.transitionPEPfilter=identifying.transitionPEPfilter, keep_all_detecting=keep_all_detecting,
+                               n_workers=n_workers) 
   
   # Check if filter length is odd for Savitzky-Golay filter.
   if( (SgolayFiltLen %% 2) != 1){
@@ -189,7 +190,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
         # Collect all the pointers for each mzML file.
         message("Collecting metadata from sqMass files.")
         # mzPntrs <- getMZMLpointers(dataPath, runs)
-        mzPntrs <- getsqMassPntrs(dataPath, runs, nameCutPattern = nameCutPattern, chrom_ext = chrom_ext, .parallel = TRUE)
+        mzPntrs <- DIAlignR::getsqMassPntrs(dataPath, runs, nameCutPattern = nameCutPattern, chrom_ext = chrom_ext, .parallel = FALSE)
         message("Metadata is collected from sqMass files.")
         return_index <- "chromatogramIndex"
         function_param_input$return_index <- return_index
@@ -247,7 +248,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
                    function_param_input = list(function_param_input) ) -> masterTbl
   
   # masterTbl_old <- masterTbl
- masterTbl <- masterTbl_old[c(sample(seq(1, dim(masterTbl_old)[1]), 48)), ] 
+ # masterTbl <- masterTbl_old[c(sample(seq(1, dim(masterTbl_old)[1]), 48)), ] 
   
   
   message("Performing reference-based alignment.")
@@ -258,37 +259,38 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   # future::plan(future::cluster, workers = cl)
   
   ## Specify number of workers
-  threads <- as.integer(future::availableCores()-4)
+  if ( is.null(n_workers) ){
+    n_workers <- as.integer(future::availableCores()-10)
+  }
   ## Generate worker_id
-  worker_id <- rep(1:threads, length.out = nrow(masterTbl))
+  worker_id <- rep(1:n_workers, length.out = nrow(masterTbl))
   ## Add worker ID to data to process
   masterTbl <- bind_cols(tibble(worker_id), masterTbl)
   
   # install.packages("devtools")
   # devtools::install_github("hadley/multidplyr")
   ## Start clusters of n workers
-  cluster <- multidplyr::new_cluster( n = threads )
+  cluster <- multidplyr::new_cluster( n = n_workers )
   ## Partition data to send to different workers
+  message(sprintf("Partioning data across %s workers.", n_workers))
   by_worker_id <- masterTbl %>%
     dplyr::group_by( worker_id ) %>%
     multidplyr::partition(., cluster = cluster)
 
-
+  message("Copying and Loading necessary global functions and libraries to each worker.")
   # Assign libraries
   multidplyr::cluster_library(cluster = cluster, packages = "dplyr")
   multidplyr::cluster_library(cluster = cluster, packages = "DIAlignR")
   # Assign values (use this to load functions or data to each core)
   multidplyr::cluster_copy(cluster = cluster, names = "getMZandChromHead", env = globalenv() )
-  
-  tictoc::tic()
+  message( "Starting alignment for each worker." )
   by_worker_id %>%
     dplyr::mutate( alignment_results = purrr::pmap( list(data, mzPntrs, function_param_input), ~analyte_align_par_func(oswdata = data, mzPntrs = mzPntrs, function_param_input = function_param_input) ) ) %>%
     collect() %>% # Special collect() function to recombine partitions
     as_tibble() -> tmp
-  tictoc::toc()
   rm(by_worker_id)
   gc()
-  
+  message( "Collecting Results" )
   alignment_results <- tryCatch( expr = {
     masterTbl %>%
       dplyr::mutate( alignment_results = purrr::pmap( list(data, mzPntrs, function_param_input), ~analyte_align_par_func(oswdata = data, mzPntrs = mzPntrs, function_param_input = function_param_input) ) ) -> tmp
