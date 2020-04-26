@@ -276,10 +276,14 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   ## Add worker ID to data to process
   masterTbl <- bind_cols(tibble(worker_id), masterTbl)
   masterTbl %>%
-    dplyr::mutate( worker_id_num = list(data.frame(worker_id=worker_id)) ) -> masterTbl
+    dplyr::group_by( worker_id, analytes ) %>%
+    dplyr::mutate( worker_id_num = list(data.frame(worker_id=worker_id)) ) %>%
+    dplyr::ungroup() -> masterTbl
   
   masterTbl %>%
-    dplyr::mutate( data = purrr::pmap(list(data, worker_id_num), function(data, worker_id_num){ data %>% dplyr::mutate( worker_id_num = worker_id_num[[1]]) } ) ) -> masterTbl
+    dplyr::group_by( worker_id, analytes ) %>%
+    dplyr::mutate( data = purrr::pmap(list(data, worker_id_num), function(data, worker_id_num){ data %>% dplyr::mutate( worker_id_num = worker_id_num[[1]]) } ) ) %>%
+    dplyr::ungroup() -> masterTbl
   
   # install.packages("devtools")
   # devtools::install_github("hadley/multidplyr")
