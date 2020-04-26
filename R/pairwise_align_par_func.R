@@ -1,3 +1,4 @@
+#' @export
 pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, mzPntrs, function_param_input ){
   
   oswdata_runpair_data <- oswdata_runpair_data[[1]]

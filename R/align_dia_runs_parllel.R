@@ -76,9 +76,9 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     library(dplyr)
     library(zoo)
     # dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/lower_product_mz_threshold/DIAlignR_Analysis/data"
-    # dataPath <- "/media/roestlab/Data1/User/JustinS/phospho_enriched_u2os/Georges_Results/data"
+    dataPath <- "/media/roestlab/Data1/User/JustinS/phospho_enriched_u2os/Georges_Results/data"
     # dataPath <- "/home/singjust/projects/def-hroest/data/phospho_enriched_U2OS/singjust_results/Georges_Results/data"
-    dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/George_lib_repeat2/DIAlignR_Analysis/data/"
+    # dataPath <- "/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/George_lib_repeat2/DIAlignR_Analysis/data/"
     alignType = "hybrid"; analyteInGroupLabel = FALSE; oswMerged = TRUE;
     runs = NULL; analytes = NULL; nameCutPattern = "(.*)(/)(.*)"; chrom_ext=".chrom.sqMass"
     # runs <- c('chludwig_K150309_007b_SW_1_6', 'chludwig_K150309_008_SW_1_4', 'chludwig_K150309_009_SW_1_3', 'chludwig_K150309_010_SW_1_2', 'chludwig_K150309_011_SW_1_1point5', 'chludwig_K150309_012_SW_1_1', 'chludwig_K150309_013_SW_0')
@@ -98,7 +98,8 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     identifying=F
     identifying.transitionPEPfilter=0.6
     keep_all_detecting=T
-    i=4
+    i=4;
+    n_workers=parallel::detectCores() - 16
     analyteFDR = 1
     analyte<- "ANS(Phospho)SPTTNIDHLK(Label:13C(6)15N(2))_2"
     analyte <- "AGLDNVDAES(Phospho)K(Label:13C(6)15N(2))_2" # Apparently belongs to two peaks
@@ -149,7 +150,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   }
   
   # Get filenames from .merged.osw file and check if names are consistent between osw and mzML files.
-  filenames <- getRunNames(dataPath, oswMerged, nameCutPattern, chrom_ext=chrom_ext)
+  filenames <- DIAlignR:::getRunNames(dataPath, oswMerged, nameCutPattern, chrom_ext=chrom_ext)
   if(!is.null(runs)){
     filenames <- filenames[filenames$runs %in% runs,]
     missingRun <- setdiff(runs, filenames$runs)
@@ -244,11 +245,11 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     merge( analyte_row_id_mapping, by = "transition_group_id" ) %>%
     dplyr::group_by( analytes ) %>%
     tidyr::nest() %>%
-    dplyr::mutate( mzPntrs = list(mzPntrs),
+    dplyr::mutate( #mzPntrs = list(mzPntrs),
                    function_param_input = list(function_param_input) ) -> masterTbl
   
-  # masterTbl_old <- masterTbl
- # masterTbl <- masterTbl_old[c(sample(seq(1, dim(masterTbl_old)[1]), 48)), ] 
+ masterTbl_old <- masterTbl
+ masterTbl <- masterTbl_old[c(sample(seq(1, dim(masterTbl_old)[1]), 48)), ]
   
   
   message("Performing reference-based alignment.")
@@ -272,28 +273,34 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   ## Start clusters of n workers
   cluster <- multidplyr::new_cluster( n = n_workers )
   ## Partition data to send to different workers
-  message(sprintf("Partioning data across %s workers.", n_workers))
+  message(sprintf("Partioning data across %s workers: ", n_workers), appendLF = FALSE)
+  tictoc::tic()
   by_worker_id <- masterTbl %>%
     dplyr::group_by( worker_id ) %>%
     multidplyr::partition(., cluster = cluster)
+  tictoc:::toc()
 
-  message("Copying and Loading necessary global functions and libraries to each worker.")
+  message("Copying and Loading necessary global functions and libraries to each worker: ", appendLF = FALSE)
+  tictoc::tic()
   # Assign libraries
   multidplyr::cluster_library(cluster = cluster, packages = "dplyr")
   multidplyr::cluster_library(cluster = cluster, packages = "DIAlignR")
   # Assign values (use this to load functions or data to each core)
-  multidplyr::cluster_copy(cluster = cluster, names = "getMZandChromHead", env = globalenv() )
-  message( "Starting alignment for each worker." )
-  by_worker_id %>%
-    dplyr::mutate( alignment_results = purrr::pmap( list(data, mzPntrs, function_param_input), ~analyte_align_par_func(oswdata = data, mzPntrs = mzPntrs, function_param_input = function_param_input) ) ) %>%
-    collect() %>% # Special collect() function to recombine partitions
-    as_tibble() -> tmp
-  rm(by_worker_id)
-  gc()
+  multidplyr::cluster_copy(cluster = cluster, names = "mzPntrs", env = globalenv() )
+  tictoc:::toc()
+  
   message( "Collecting Results" )
   alignment_results <- tryCatch( expr = {
-    masterTbl %>%
-      dplyr::mutate( alignment_results = purrr::pmap( list(data, mzPntrs, function_param_input), ~analyte_align_par_func(oswdata = data, mzPntrs = mzPntrs, function_param_input = function_param_input) ) ) -> tmp
+    # masterTbl %>%
+    #   dplyr::mutate( alignment_results = purrr::pmap( list(data, mzPntrs, function_param_input), ~analyte_align_par_func(oswdata = data, mzPntrs = mzPntrs, function_param_input = function_param_input) ) ) -> tmp
+    # 
+    message( "Starting alignment for each worker." )
+    by_worker_id %>%
+      dplyr::mutate( alignment_results = purrr::pmap( list(data, function_param_input), ~analyte_align_par_func(oswdata = data, function_param_input = function_param_input) ) ) %>%
+      collect() %>% # Special collect() function to recombine partitions
+      as_tibble() -> tmp
+    rm(by_worker_id)
+    gc()
     
     alignment_results <- data.table::rbindlist(tmp$alignment_results, fill = TRUE)
   }, 

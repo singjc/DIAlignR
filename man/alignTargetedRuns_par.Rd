@@ -37,7 +37,8 @@ alignTargetedRuns_par(
   identifying = FALSE,
   identifying.transitionPEPfilter = 0.6,
   keep_all_detecting = TRUE,
-  mzPntrs = NULL
+  mzPntrs = NULL,
+  n_workers = NULL
 )
 }
 \arguments{

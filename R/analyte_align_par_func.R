@@ -1,4 +1,5 @@
-analyte_align_par_func <- function( oswdata, mzPntrs, function_param_input ){
+#' @export
+analyte_align_par_func <- function( oswdata, function_param_input ){
   ## Redirect output
   redirect_output <- file( paste("analyte_align_par_func_",sample(seq(0, 9999999), 1),".txt", sep="" ), open="wt" )
   sink(redirect_output ,type = "output")
@@ -6,7 +7,7 @@ analyte_align_par_func <- function( oswdata, mzPntrs, function_param_input ){
   
   cat("\n---------------------- START --------------------------\n")
   oswdata <- oswdata[[1]]
-  mzPntrs <- mzPntrs[[1]]
+  # mzPntrs <- mzPntrs[[1]]
   function_param_input <- function_param_input[[1]]
   
   analyte <- unique( oswdata$transition_group_id )

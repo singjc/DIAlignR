@@ -1,3 +1,51 @@
+#' Get chromatogram data points and chromatogram indexes per chromatogram file
+#' @param input A shiny input variable that contains Working Directory Information
+#' @param global A list variable containing paths to chromatogram files
+#' @return (A list of mzRpwiz)
+#' 
+#' @importFrom tictoc tic toc
+#' 
+#' @export
+getMZandChromHead <- function( data_table=NULL, chromatogram_file_i=NULL, run=NULL , sql_query=NULL, mzPntrs=NULL ){
+  if ( !is.null(data_table) ){
+    # print( (data_table) )
+    data <- data_table[[1]]
+    chromatogram_file_i <- data$chromFiles
+    run <- data$run_id
+    sql_query <- data$sql_query
+  }
+  if ( is.null(mzPntrs) ){
+    mzPntrs <- list()
+  }
+  message( sprintf("Processing (%s): %s", run, chromatogram_file_i ) )
+  # Establish connection to sqlite database chromatogram file
+  conn <- DBI::dbConnect( RSQLite::SQLite(), chromatogram_file_i )
+  ## Get table of chromatogram incidces and respective transtion ids
+  chromHead <- dplyr::collect( dplyr::tbl(conn, dbplyr::sql(sql_query)) )
+  ## Store run id and mz object into master list
+  mzPntrs[[run]] <- list()
+  ## TODO At somepoint make this store the chrom data for sqmass maybe
+  # mzPntrs[[run]]$mz <- mz 
+  ## Store file path
+  # mzPntrs[[run]]$mz <- chromatogram_file_i
+  mzPntrs[[run]]$mz <- dplyr::collect( dplyr::tbl(conn, dbplyr::sql( "SELECT * FROM DATA"  )) )
+  mzPntrs[[run]]$chromHead <- chromHead
+  ## Append chromHead to sqMass DATA table
+  mzPntrs[[run]]$mz <- merge( mzPntrs[[run]]$chromHead , mzPntrs[[run]]$mz, by.x="chromatogramIndex", by.y="CHROMATOGRAM_ID", all=T)
+  colnames(mzPntrs[[run]]$mz)[which(grepl("chromatogramIndex", colnames(mzPntrs[[run]]$mz)))] <- "CHROMATOGRAM_ID"
+  colnames(mzPntrs[[run]]$mz)[which(grepl("chromatogramId", colnames(mzPntrs[[run]]$mz)))] <- "FRAGMENT_ID"
+  
+  ## Disconnect form database
+  DBI::dbDisconnect(conn) 
+  
+  if ( !is.null(data) ){
+    return( list(mz=mzPntrs[[run]]$mz, chromHead=mzPntrs[[run]]$chromHead) )
+  } else {
+    return( mzPntrs )
+  }
+  
+}
+
 #' Get a list of data.tables for chromatrogram id mappings
 #' @param input A shiny input variable that contains Working Directory Information
 #' @param global A list variable containing paths to chromatogram files
@@ -7,46 +55,6 @@
 #' 
 #' @export
 getsqMassPntrs <- function( dataPath, runs, nameCutPattern = "(.*)(/)(.*)", chrom_ext=".chrom.sqMass", .parallel=TRUE  ){
-  
-  getMZandChromHead <- function( data_table=NULL, chromatogram_file_i=NULL, run=NULL , sql_query=NULL, mzPntrs=NULL ){
-    if ( !is.null(data_table) ){
-      # print( (data_table) )
-      data <- data_table[[1]]
-      chromatogram_file_i <- data$chromFiles
-      run <- data$run_id
-      sql_query <- data$sql_query
-    }
-    if ( is.null(mzPntrs) ){
-      mzPntrs <- list()
-    }
-    message( sprintf("Processing (%s): %s", run, chromatogram_file_i ) )
-    # Establish connection to sqlite database chromatogram file
-    conn <- DBI::dbConnect( RSQLite::SQLite(), chromatogram_file_i )
-    ## Get table of chromatogram incidces and respective transtion ids
-    chromHead <- dplyr::collect( dplyr::tbl(conn, dbplyr::sql(sql_query)) )
-    ## Store run id and mz object into master list
-    mzPntrs[[run]] <- list()
-    ## TODO At somepoint make this store the chrom data for sqmass maybe
-    # mzPntrs[[run]]$mz <- mz 
-    ## Store file path
-    # mzPntrs[[run]]$mz <- chromatogram_file_i
-    mzPntrs[[run]]$mz <- dplyr::collect( dplyr::tbl(conn, dbplyr::sql( "SELECT * FROM DATA"  )) )
-    mzPntrs[[run]]$chromHead <- chromHead
-    ## Append chromHead to sqMass DATA table
-    mzPntrs[[run]]$mz <- merge( mzPntrs[[run]]$chromHead , mzPntrs[[run]]$mz, by.x="chromatogramIndex", by.y="CHROMATOGRAM_ID", all=T)
-    colnames(mzPntrs[[run]]$mz)[which(grepl("chromatogramIndex", colnames(mzPntrs[[run]]$mz)))] <- "CHROMATOGRAM_ID"
-    colnames(mzPntrs[[run]]$mz)[which(grepl("chromatogramId", colnames(mzPntrs[[run]]$mz)))] <- "FRAGMENT_ID"
-    
-    ## Disconnect form database
-    DBI::dbDisconnect(conn) 
-    
-    if ( !is.null(data) ){
-      return( list(mz=mzPntrs[[run]]$mz, chromHead=mzPntrs[[run]]$chromHead) )
-    } else {
-      return( mzPntrs )
-    }
-    
-  }
   
   sql_query <- sprintf("SELECT
 CHROMATOGRAM.NATIVE_ID AS chromatogramId,
@@ -137,6 +145,7 @@ FROM CHROMATOGRAM
     
     mzPntrs <- tmp$mzPntrs
     names(mzPntrs) <- tidyr::unnest(masterTbl, cols="data") %>% dplyr::ungroup() %>% dplyr::select( run_id ) %>% as.matrix() %>% as.character()
+    
     
   }
   
