@@ -7,7 +7,7 @@ analyte_align_par_func <- function( oswdata, function_param_input ){
   
   
   ## Redirect output
-  redirect_output <- file( paste("analyte_align_par_func_worker_", unique(oswdata$worker_id_num)[[1]],".txt", sep="" ), open="wt" )
+  redirect_output <- file( paste("analyte_align_par_func_worker_", unique(oswdata$worker_id_num)[[1]],".txt", sep="" ), open="at" )
   sink(redirect_output, append = T, type = "output")
   sink(redirect_output, append = T, type = "message")
   
