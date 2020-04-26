@@ -1,4 +1,9 @@
 analyte_align_par_func <- function( oswdata, mzPntrs, function_param_input ){
+  ## Redirect output
+  redirect_output <- file( paste("analyte_align_par_func_",sample(seq(0, 9999999), 1),".txt", sep="" ), open="wt" )
+  sink(redirect_output ,type = "output")
+  sink(redirect_output, type = "message")
+  
   cat("\n---------------------- START --------------------------\n")
   oswdata <- oswdata[[1]]
   mzPntrs <- mzPntrs[[1]]
@@ -155,5 +160,8 @@ analyte_align_par_func <- function( oswdata, mzPntrs, function_param_input ){
     analyte_alignment_results$alignment_log <- alignment_log
   }
   
+  #and to close connections
+  sink(NULL)
+  sink(NULL)
   return( analyte_alignment_results )
 }
