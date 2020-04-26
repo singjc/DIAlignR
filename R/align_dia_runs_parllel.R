@@ -275,18 +275,24 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   worker_id <- rep(1:n_workers, length.out = nrow(masterTbl))
   ## Add worker ID to data to process
   masterTbl <- bind_cols(tibble(worker_id), masterTbl)
+  masterTbl %>%
+    dplyr::mutate( worker_id_num = list(data.frame(worker_id=worker_id)) ) -> masterTbl
+  
+  masterTbl %>%
+    dplyr::mutate( data = purrr::pmap(list(data, worker_id_num), function(data, worker_id_num){ data %>% dplyr::mutate( worker_id_num = worker_id_num[[1]]) } ) ) -> masterTbl
   
   # install.packages("devtools")
   # devtools::install_github("hadley/multidplyr")
   ## Start clusters of n workers
   cluster <- multidplyr::new_cluster( n = n_workers )
   ## Partition data to send to different workers
-  message(sprintf("Partioning data across %s workers: ", n_workers), appendLF = FALSE)
+  message(sprintf("Partioning %s anayltes data across %s workers: ", length(unique(oswFiles_dt$transition_group_id)), n_workers), appendLF = FALSE)
   tictoc::tic()
   by_worker_id <- masterTbl %>%
     dplyr::group_by( worker_id ) %>%
     multidplyr::partition(., cluster = cluster)
   tictoc:::toc()
+  print(by_worker_id)
   
   message("Copying and Loading necessary global functions and libraries to each worker: ", appendLF = FALSE)
   tictoc::tic()

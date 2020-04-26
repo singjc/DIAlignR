@@ -1,14 +1,18 @@
 #' @export
 analyte_align_par_func <- function( oswdata, function_param_input ){
-  ## Redirect output
-  redirect_output <- file( paste("analyte_align_par_func_",sample(seq(0, 9999999), 1),".txt", sep="" ), open="wt" )
-  sink(redirect_output ,type = "output")
-  sink(redirect_output, type = "message")
   
-  cat("\n---------------------- START --------------------------\n")
   oswdata <- oswdata[[1]]
   # mzPntrs <- mzPntrs[[1]]
   function_param_input <- function_param_input[[1]]
+  
+  
+  ## Redirect output
+  redirect_output <- file( paste("analyte_align_par_func_worker_", unique(oswdata$worker_id_num)[[1]],".txt", sep="" ), open="wt" )
+  sink(redirect_output, append = T, type = "output")
+  sink(redirect_output, append = T, type = "message")
+  
+  cat("\n---------------------- START --------------------------\n")
+  
   
   analyte <- unique( oswdata$transition_group_id )
   cat( sprintf("analyte (%s of %s): %s\n", unique(oswdata$analyte_row_id), unique(oswdata$n_analytes), analyte) )
