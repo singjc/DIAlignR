@@ -9,7 +9,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
   eXp <- subset( oswdata_runpair_data, subset = run_type=="eXp", select = run_id ) %>% unique() %>% as.character()
   ref <- subset( oswdata_runpair_data, subset = run_type=="ref", select = run_id ) %>% unique() %>% as.character()
   analyte <- unique(oswdata_runpair_data$transition_group_id)
-  message(sprintf("Working on analyte: %s | ref: %s | exp: %s", analyte, ref, eXp))
+  cat(sprintf("Working on analyte: %s | ref: %s | exp: %s", analyte, ref, eXp), file = function_param_input$redirect_output , sep = "\n")
   
   ## Get Overlapping product ms of identifying transitions
   if( function_param_input$identifying ){
@@ -31,11 +31,11 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
                                    SgolayFiltLen = SgolayFiltLen)
       ## End timer
       exec_time <- tictoc::toc(quiet = T)
-      message(sprintf("Re-Extracting XIC with %s traces for ref run %s: Elapsed Time = %s sec", length(chromIndices), ref, round(exec_time$toc - exec_time$tic, 3) ))
+      cat(sprintf("Re-Extracting XIC with %s traces for ref run %s: Elapsed Time = %s sec", length(chromIndices), ref, round(exec_time$toc - exec_time$tic, 3) ), file = function_param_input$redirect_output , sep = "\n")
     } else {
       ## Set procuct_mz_intersect to NULL
       procuct_mz_intersect <- NULL
-      warning("Chromatogram indices for ", analyte, " are missing in ", function_param_input$runs[eXp])
+      cat( paste0("Chromatogram indices for ", analyte, " are missing in ", function_param_input$runs[eXp]), file = function_param_input$redirect_output , sep = "\n" )
       next
     }
   } else {
@@ -52,7 +52,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
     XICs.eXp <- extractXIC_group(mzPntrs[[eXp]]$mz, chromIndices)
     ## End timer
     exec_time <- tictoc::toc(quiet = T)
-    message(sprintf("Extracting XIC with %s traces for eXp run %s: Elapsed Time = %s sec", length(chromIndices), eXp, round(exec_time$toc - exec_time$tic, 3) ))
+    cat(sprintf("Extracting XIC with %s traces for eXp run %s: Elapsed Time = %s sec", length(chromIndices), eXp, round(exec_time$toc - exec_time$tic, 3) ), file = function_param_input$redirect_output , sep = "\n")
     # Get the loess fit for hybrid alignment
     loessFits <- list()
     pair <- paste(ref, eXp, sep = "_")
@@ -72,7 +72,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
             
           },
           error = function(e){
-            message(sprintf("The following error occured using maxFdrLoess %s: %s", maxFdrLoess_i, e$message))
+            cat(sprintf("ERROR: The following error occured using maxFdrLoess %s: %s", maxFdrLoess_i, e$message), file = function_param_input$redirect_output , sep = "\n")
             Loess.fit <- NULL
           }
         )
@@ -80,7 +80,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
         ##TODO Add a stop condition, otherwise loop will for on forever
       }
       if ( is.null(Loess.fit) ) {
-        message( sprintf("Warn: Was unable to getGlobalAlignment even after permuting different maxFdrLoess thresholds...Skipping...%s", pair) )
+        cat( sprintf("Warn: Was unable to getGlobalAlignment even after permuting different maxFdrLoess thresholds...Skipping...%s", pair), file = function_param_input$redirect_output , sep = "\n" )
         return( NULL ) #TODO change this return to something more representible maybe
       }
       loessFits[[pair]] <- Loess.fit
@@ -100,15 +100,15 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
                  ref, eXp, 
                  function_param_input$filenames$runs[which(rownames(function_param_input$filenames) %in% ref)], function_param_input$filenames$runs[which(rownames(function_param_input$filenames) %in% eXp)], 
                  paste(unlist(lapply(XICs.ref, function(x) length(x[[1]]))), collapse=", "), paste(unlist(lapply(XICs.eXp, function(x) length(x[[1]]))), collapse=", "), 
-                 adaptiveRT, eXpRT, ifelse( is.null(eXp_feature), 'NULL', eXp_feature) )  )
+                 adaptiveRT, eXpRT, ifelse( is.null(eXp_feature), 'NULL', eXp_feature) ), file = function_param_input$redirect_output , sep = "\n"  )
     
     if(!is.null(eXp_feature)){
-      message("--> Start Writing Results to respective tables")
+      cat("--> Start Writing Results to respective tables", file = function_param_input$redirect_output , sep = "\n")
       # if ( length(eXp_feature) > 1 ) warning( sprintf( "There was more than one feature found!! Taking only first feature.. %s\n", as.character(eXp_feature) ) )
       # lowest m_score index
       if ( any("ms2_m_score" %in% names(eXp_feature)) ){ m_score_filter_name <- "ms2_m_score" } else { m_score_filter_name <- "m_score" }
       use_index <- which( min(eXp_feature[[m_score_filter_name]])==eXp_feature[[m_score_filter_name]] )
-      if ( length(use_index)>1 ) { warning("There were two eXp_features with the same m_score.."); use_index <- 1 }
+      if ( length(use_index)>1 ) { cat("WARN: There were two eXp_features with the same m_score..", file = function_param_input$redirect_output , sep = "\n"); use_index <- 1 }
       # A feature is found. Use this feature for quantification.
       analyte_run_pair_results <- data.table::data.table( transition_group_id = analyte,
                                                           run_id = eXp,
@@ -125,17 +125,22 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
                                                           rightWidth = eXp_feature[["rightWidth"]][use_index],
                                                           Intensity = eXp_feature[["Intensity"]][use_index],
                                                           peak_group_rank = eXp_feature[["peak_group_rank"]][use_index],
+                                                          d_score = if ( "d_score" %in% names(eXp_feature) ) eXp_feature[["d_score"]][use_index] else "d_score_not_in_table",
+                                                          ms2_pep = if ( "ms2_pep" %in% names(eXp_feature) ) eXp_feature[["ms2_pep"]][use_index] else "ms2_pep_not_in_table",
                                                           ms2_m_score = if ( "ms2_m_score" %in% names(eXp_feature) ) eXp_feature[["ms2_m_score"]][use_index] else "see_m_score",
+                                                          ipf_pep = if ( "ipf_pep" %in% names(eXp_feature) ) eXp_feature[["ipf_pep"]][use_index] else "no_ipf",
                                                           m_score = eXp_feature[["m_score"]][use_index]
                                                           )
       
-      message("--> Done Writing Results to respective tables\n")
+      cat("--> Done Writing Results to respective tables\n", file = function_param_input$redirect_output , sep = "\n")
       return( analyte_run_pair_results )
     } else {
-      # Feature is not found.}
+      # Feature is not found.
+      cat( "WARN: eXp_feature was empty...", file = function_param_input$redirect_output , sep = "\n" )
+      return( NULL ) #TODO change this return to something more representible maybe
     }
   } else {
-    warning("Chromatogram indices for ", analyte, " are missing in ", function_param_input$runs[eXp])
+    cat(paste0("Chromatogram indices for ", analyte, " are missing in ", function_param_input$runs[eXp]), file = function_param_input$redirect_output , sep = "\n")
     return( NULL ) #TODO change this return to something more representible maybe
   }
   

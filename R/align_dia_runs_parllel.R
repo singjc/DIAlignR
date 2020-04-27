@@ -99,7 +99,8 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     identifying.transitionPEPfilter=0.6
     keep_all_detecting=T
     i=4;
-    n_workers=parallel::detectCores() - 16
+    # n_workers=parallel::detectCores() - 16
+    n_workers=4
     analyteFDR = 1
     cached_mzPntrsdb="cached_chromatogram_data.mzPntrs"
     analyte<- "ANS(Phospho)SPTTNIDHLK(Label:13C(6)15N(2))_2"
@@ -314,15 +315,17 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
 
     message( "Starting alignment for each worker." )
     by_worker_id %>%
+      dplyr::group_by( analytes ) %>%
       dplyr::mutate( alignment_results = purrr::pmap( list(data, function_param_input), ~analyte_align_par_func(oswdata = data, function_param_input = function_param_input) ) ) %>%
       collect() %>% # Special collect() function to recombine partitions
       as_tibble() -> tmp
-    rm(by_worker_id)
+    # rm(by_worker_id)
     gc()
     
     alignment_results <- data.table::rbindlist(tmp$alignment_results, fill = TRUE)
   }, 
   error = function(e){
+    message( sprintf("There was an error that occured: %s", e$message) )
     return( data.table::as.data.table(e$message) )
   })
   
@@ -339,7 +342,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   message( sprintf("Function Call started at: %s\nFunction Call ended at: %s\n", func_call_start_time, func_call_end_time) )
   
   ## Cleanup. 
-  rm(mzPntrs)
+  # rm(mzPntrs)
   
   if(saveFiles){
     data.table::fwrite( alignment_results, file = "alignment_results.tsv", sep = "\t" )
