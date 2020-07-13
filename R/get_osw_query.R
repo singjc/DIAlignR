@@ -188,7 +188,7 @@ INNER JOIN PRECURSOR ON PRECURSOR.ID = FEATURE.PRECURSOR_ID
 INNER JOIN PRECURSOR_PEPTIDE_MAPPING ON PRECURSOR_PEPTIDE_MAPPING.PRECURSOR_ID = FEATURE.PRECURSOR_ID
 %s -- Join PEPTIDE Table #join_peptide
 WHERE FEATURE.ID IS NOT NULL -- Default WHERE Being clause
-%s -- Filter for IPF QVALUE #maxFdrQuery
+AND SCORE_IPF.QVALUE < %s -- Filter for IPF QVALUE #maxFdrQuery
 %s -- Miscellaneous control statements for if SCORE_IPF is used #miscellaneous_score_ipf_control
 %s -- #selectAnalytes
 %s -- Filter for specific RUN.ID #matchFilename
