@@ -3,22 +3,29 @@
 #' export
 write_mzPntrsdb <- function( mzPntrs, out_file=NULL ){
   if ( is.null(out_file) ){
-  out_file <- "cached_chromatogram_data.mzPntrs"
+  out_file <- "./cached_chromatogram_data.mzPntrs"
   }
   
   con <- DBI::dbConnect(RSQLite::SQLite(), out_file)
   
   run_ids <- data.frame(run_id=names(mzPntrs))
-  DBI::dbCreateTable( conn = con, name = "run", fields = c("run_id"))
-  DBI::dbWriteTable( conn = con, name = "run", value = run_ids )
+  message("Creating run table...")
+  head( run_ids )
+  DBI::dbCreateTable( conn = con, name = "run", fields = run_ids)
+  message("Writing to run table...")
+  DBI::dbWriteTable( conn = con, name = "run", value = run_ids, overwrite = T )
   
   chromHead <- data.table::rbindlist(lapply(mzPntrs, `[[`, "chromHead"), idcol = "run_id")
-  DBI::dbCreateTable( conn = con, name = "chromHead", fields ==c("run_id", "chromatogramId",  "chromatogramIndex"))
-  DBI::dbWriteTable(conn = con, name = "chromHead", value = chromHead )
+  message("Creating chromHead table...")
+  head( chromHead )
+  DBI::dbCreateTable( conn = con, name = "chromHead", fields = chromHead )
+  DBI::dbWriteTable(conn = con, name = "chromHead", value = chromHead, overwrite = T )
   
   mz <- data.table::rbindlist(lapply(mzPntrs, `[[`, "mz"), idcol = "run_id")
-  DBI::dbCreateTable( conn = con, name = "mz", fields = c("run_id", "CHROMATOGRAM_ID", "FRAGMENT_ID", "SPECTRUM_ID", "COMPRESSION", "DATA_TYPE", "DATA"))
-  DBI::dbWriteTable( conn = con, name = "mz", value = mz )
+  message("Creating mz table...")
+  head( mz )
+  DBI::dbCreateTable( conn = con, name = "mz", fields = mz )
+  DBI::dbWriteTable( conn = con, name = "mz", value = mz, overwrite = T )
   
   DBI::dbExecute( conn = con, "CREATE INDEX 'chromhead_idx' ON 'chromHead' (
 	'run_id',
