@@ -155,6 +155,11 @@ getQuery <- function(maxFdrQuery, oswMerged = TRUE, analytes = NULL,
     join_score_ipf <- sprintf("INNER JOIN SCORE_IPF ON SCORE_IPF.FEATURE_ID = FEATURE.ID")
     join_peptide <- sprintf("INNER JOIN PEPTIDE ON ( PEPTIDE.ID = PRECURSOR_PEPTIDE_MAPPING.PEPTIDE_ID OR PEPTIDE.ID = SCORE_IPF.PEPTIDE_ID )")
     miscellaneous_score_ipf_control <- "AND SCORE_IPF.QVALUE IS NOT NULL AND PEPTIDE.MODIFIED_SEQUENCE NOT LIKE '%UniMod%'"
+    if(oswMerged){
+      matchFilename <- paste0(" AND RUN.FILENAME LIKE '%", filename,"%'")
+    } else{
+      matchFilename <- ""
+    }
    query <- sprintf(
      "SELECT 
      %s, --- #transition_group_id
@@ -187,6 +192,8 @@ INNER JOIN FEATURE_MS2 ON FEATURE_MS2.FEATURE_ID = FEATURE.ID
 INNER JOIN PRECURSOR ON PRECURSOR.ID = FEATURE.PRECURSOR_ID 
 INNER JOIN PRECURSOR_PEPTIDE_MAPPING ON PRECURSOR_PEPTIDE_MAPPING.PRECURSOR_ID = FEATURE.PRECURSOR_ID
 %s -- Join PEPTIDE Table #join_peptide
+INNER JOIN TRANSITION_PRECURSOR_MAPPING ON TRANSITION_PRECURSOR_MAPPING.PRECURSOR_ID = PRECURSOR.ID
+INNER JOIN TRANSITION ON TRANSITION_PRECURSOR_MAPPING.TRANSITION_ID = TRANSITION.ID
 WHERE FEATURE.ID IS NOT NULL -- Default WHERE Being clause
 AND SCORE_IPF.QVALUE < %s -- Filter for IPF QVALUE #maxFdrQuery
 %s -- Miscellaneous control statements for if SCORE_IPF is used #miscellaneous_score_ipf_control
