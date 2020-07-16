@@ -127,7 +127,6 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   }
   
   
-  message(sprintf( "There are %s cores available for multiprocessing, will use %s cores.", future::availableCores(), (future::availableCores()-10) ) )
   
   func_call_start_time <- Sys.time()
   
@@ -320,15 +319,15 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
       collect() %>% # Special collect() function to recombine partitions
       as_tibble() -> tmp
     # rm(by_worker_id)
-    gc()
-    
+    # gc()
     alignment_results <- data.table::rbindlist(tmp$alignment_results, fill = TRUE)
   }, 
   error = function(e){
     message( sprintf("There was an error that occured: %s", e$message) )
     return( data.table::as.data.table(e$message) )
   })
-  
+  rlang::last_error() 
+  rlang::last_trace()
   ## Explicitly close multisession workers by switching plan
   ##future::plan(future::sequential)
   # parallel::stopCluster(cl)

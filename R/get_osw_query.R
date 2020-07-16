@@ -160,6 +160,12 @@ getQuery <- function(maxFdrQuery, oswMerged = TRUE, analytes = NULL,
     } else{
       matchFilename <- ""
     }
+    if ( identifying ){
+            ## Filter Identifying transitions for PEP level threshold, and keep detecting NULL transitions
+            identifying_transition_filter_query <- sprintf("AND (SCORE_TRANSITION.PEP < %s OR (TRANSITION.DETECTING AND SCORE_TRANSITION.PEP IS NULL))", identifying.transitionPEPfilter)
+          } else {
+            identifying_transition_filter_query <- ''
+          }
    query <- sprintf(
      "SELECT 
      %s, --- #transition_group_id
@@ -196,13 +202,18 @@ INNER JOIN TRANSITION_PRECURSOR_MAPPING ON TRANSITION_PRECURSOR_MAPPING.PRECURSO
 INNER JOIN TRANSITION ON TRANSITION_PRECURSOR_MAPPING.TRANSITION_ID = TRANSITION.ID
 WHERE FEATURE.ID IS NOT NULL -- Default WHERE Being clause
 AND SCORE_IPF.QVALUE < %s -- Filter for IPF QVALUE #maxFdrQuery
-%s -- Miscellaneous control statements for if SCORE_IPF is used #miscellaneous_score_ipf_control
+%s -- #miscellaneous_score_ipf_control Miscellaneous control statements for if SCORE_IPF is used #miscellaneous_score_ipf_control
+%s -- #identifying_transition_filter_query
 %s -- #selectAnalytes
-%s -- Filter for specific RUN.ID #matchFilename
+%s -- #matchFilename Filter for specific RUN.ID #matchFilename
+AND (
+      TRANSITION.DETECTING=TRUE
+      OR TRANSITION.IDENTIFYING=%s --- #identifying
+          )
 ORDER BY transition_group_id,
 peak_group_rank
 ", transition_group_id, join_score_ms2, join_score_ipf, join_peptide, maxFdrQuery,
-     miscellaneous_score_ipf_control, selectAnalytes, matchFilename ) 
+     miscellaneous_score_ipf_control, identifying_transition_filter_query, selectAnalytes, matchFilename, identifying ) 
     
    # cat( query ) 
   } else{
@@ -229,6 +240,7 @@ peak_group_rank
   INNER JOIN RUN ON RUN.ID = FEATURE.RUN_ID
   INNER JOIN TRANSITION_PRECURSOR_MAPPING ON TRANSITION_PRECURSOR_MAPPING.PRECURSOR_ID = PRECURSOR.ID
   INNER JOIN TRANSITION ON TRANSITION_PRECURSOR_MAPPING.TRANSITION_ID = TRANSITION.ID
+  LEFT JOIN SCORE_TRANSITION ON (SCORE_TRANSITION.TRANSITION_ID = TRANSITION.ID AND SCORE_TRANSITION.FEATURE_ID = FEATURE.ID)
   LEFT JOIN FEATURE_MS2 ON FEATURE_MS2.FEATURE_ID = FEATURE.ID
   LEFT JOIN SCORE_MS2 ON SCORE_MS2.FEATURE_ID = FEATURE.ID
   WHERE SCORE_MS2.QVALUE < ", maxFdrQuery, selectAnalytes, matchFilename, 
