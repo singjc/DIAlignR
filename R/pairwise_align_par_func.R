@@ -22,7 +22,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
       procuct_mz_intersect <- Reduce( intersect, lapply(seq(1,dim(oswFile_subset)[1]), function(row_idx) paste( strsplit(oswFile_subset$product_mz, ",")[[row_idx]], strsplit(oswFile_subset$detecting_transitions, ",")[[row_idx]], sep="_" ) ) )
       ## Re-Extract Reference Chrom IDs for only overlapping product mz transitions
       ## TODO need to maybe make this non-repeptitive
-      chromIndices <- selectChromIndices(oswdata, runname = ref, analyte = analyte, product_mz_filter_list=procuct_mz_intersect, return_index=function_param_input$return_index, keep_all_detecting=function_param_input$keep_all_detecting)
+      # chromIndices <- selectChromIndices(oswdata, runname = ref, analyte = analyte, product_mz_filter_list=procuct_mz_intersect, return_index=function_param_input$return_index, keep_all_detecting=function_param_input$keep_all_detecting)
       chromIndices <- selectChromIndices(oswdata, runname = ref, analyte = analyte, product_mz_filter_list=procuct_mz_intersect, return_index=function_param_input$return_index, keep_all_detecting=function_param_input$keep_all_detecting)
       tictoc::tic()
       mzPntrs <- getmzPntrs_on_the_fly( db = function_param_input$cached_mzPntrsdb, runs = ref, chromIndices = chromIndices )

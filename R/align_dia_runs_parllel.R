@@ -326,8 +326,10 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     message( sprintf("There was an error that occured: %s", e$message) )
     return( data.table::as.data.table(e$message) )
   })
-  rlang::last_error() 
-  rlang::last_trace()
+  
+  head(alignment_results)
+  # rlang::last_error() 
+  # rlang::last_trace()
   ## Explicitly close multisession workers by switching plan
   ##future::plan(future::sequential)
   # parallel::stopCluster(cl)
