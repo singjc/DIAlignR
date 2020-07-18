@@ -16,7 +16,12 @@ analyte_align_par_func <- function( oswdata, function_param_input ){
   # capture.output(knitr::kable(head(oswdata[,c(1:2,6)])), file=redirect_output, append = T)
   
   analyte <- unique( oswdata$transition_group_id )
-  cat( sprintf("Worker %s | Partition Dim %s | analyte (%s of %s): %s\n", unique(oswdata$worker_id_num)[[1]], paste(dim(oswdata), collapse = ", "), unique(oswdata$analyte_row_id), unique(oswdata$n_analytes), analyte), file = redirect_output, sep = "\n" )
+  cat( sprintf("Worker %s | Partition Dim %s | analyte (%s of %s): %s\n", 
+               unique(oswdata$worker_id_num)[[1]], 
+               paste(dim(oswdata), collapse = ", "), 
+               unique(oswdata$analyte_row_id), 
+               unique(oswdata$n_analytes), 
+               analyte), file = redirect_output, sep = "\n" )
   
   ## Outter analyte timer start
   analyte_start_time <- tictoc::tic(quiet = T)
@@ -176,8 +181,9 @@ analyte_align_par_func <- function( oswdata, function_param_input ){
     analyte_alignment_results$Intensity <- NaN
     analyte_alignment_results %>% dplyr::select( transition_group_id, filename, run_id, run_type, alignment_run_id_pair, alignment_run_file_pair, RTo, leftWidtho, rightWidtho, Intensityo, RT, leftWidth, rightWidth, Intensity, peak_group_rank, contains("d_score"), contains("ms2_pep"), contains("ms2_m_score"), contains("ipf_pep"), m_score ) -> analyte_alignment_results
     analyte_alignment_results$alignment_log <- alignment_log
+    
   }
-  
+  data.table::fwrite( analyte_run_pair_results, paste("analyte_alignment_results_align_par_func_worker_", unique(oswdata$worker_id_num)[[1]],".tsv", sep="" ), sep="\t") 
   ## Outer analyte timer end
   analyte_end_time <- tictoc::toc(quiet = T)
   
