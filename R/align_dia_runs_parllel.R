@@ -288,7 +288,8 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   # install.packages("devtools")
   # devtools::install_github("hadley/multidplyr")
   ## Start clusters of n workers
-  cluster <- multidplyr::new_cluster( n = n_workers )
+  #cluster <- multidplyr::new_cluster( n = n_workers )
+  cluster <- slurmR::makeSlurmCluster( n = n_workers )
   ## Partition data to send to different workers
   message(sprintf("Partioning %s anayltes data across %s workers: ", length(unique(oswFiles_dt$transition_group_id)), n_workers), appendLF = FALSE)
   tictoc::tic()
@@ -337,6 +338,8 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   # Report the execution time for hybrid alignment step.
   end_time <- Sys.time()
   message("Execution time for alignment = ", end_time - start_time)
+  
+  parallel::stopCluster( cluster )
   
   func_call_end_time <- Sys.time()
   
