@@ -288,8 +288,8 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   # install.packages("devtools")
   # devtools::install_github("hadley/multidplyr")
   ## Start clusters of n workers
-  #cluster <- multidplyr::new_cluster( n = n_workers )
-  cluster <- slurmR::makeSlurmCluster( n = n_workers, account="rrg-hroest" )
+  cluster <- multidplyr::new_cluster( n = n_workers )
+  # cluster <- slurmR::makeSlurmCluster( n = n_workers, account="rrg-hroest" )
   ## Partition data to send to different workers
   message(sprintf("Partioning %s anayltes data across %s workers: ", length(unique(oswFiles_dt$transition_group_id)), n_workers), appendLF = FALSE)
   tictoc::tic()
