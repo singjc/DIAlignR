@@ -153,7 +153,7 @@ getOswAnalytes <- function(fileInfo, oswMerged = TRUE, analyteInGroupLabel = FAL
 #' precursorsInfo <- fetchPrecursorsInfo(filename, runType = "DIA_proteomics")
 #' dim(precursorsInfo) # 303  6
 #' }
-fetchPrecursorsInfo <- function(filename, runType, selectIDs = NULL){
+fetchPrecursorsInfo <- function(filename, runType, selectIDs = NULL, useDetecting = TRUE, useIdentifying = FALSE){
   # Establish a connection of SQLite file.
   con <- DBI::dbConnect(RSQLite::SQLite(), dbname = as.character(filename))
   # Generate a query.
@@ -168,6 +168,12 @@ fetchPrecursorsInfo <- function(filename, runType, selectIDs = NULL){
                                         DBI::dbFetch(output)},
                            finally = {DBI::dbClearResult(output)
                              DBI::dbDisconnect(con)})
+  # Control for detecting and identifying transitions used in alingment
+  if ( runType=="DIA_Proteomics_IPF" ){
+    precursorsInfo <- dplyr::filter( precursorsInfo, .data$detecting_transitions==useDetecting | .data$identifying_transitions==useIdentifying ) %>% dplyr::select(-detecting_transitions, -identifying_transitions)
+  }
+  # Assert precursorsInfo must have data, and not be empty
+  if ( nrow(precursorsInfo)==0 ) stop("[fetchPrecursorsInfo] There is no precursor information...")
   # Each precursor has only one row. tidyr::nest creates a tibble object that is twice as heavy to regular list.
   precursorsInfo <- dplyr::group_by(precursorsInfo, .data$transition_group_id, .data$peptide_id, .data$sequence, .data$charge, .data$group_label) %>%
     dplyr::summarise(transition_ids = base::list(.data$transition_id)) %>% dplyr::ungroup() %>% as.data.frame()
@@ -205,17 +211,17 @@ fetchPrecursorsInfo <- function(filename, runType, selectIDs = NULL){
 #' dim(precursorsInfo) # 322  6
 #' }
 #' @export
-getPrecursors <- function(fileInfo, oswMerged = TRUE, runType = "DIA_proteomics"){
+getPrecursors <- function(fileInfo, oswMerged = TRUE, runType = "DIA_proteomics", useDetecting = TRUE, useIdentifying = FALSE){
   if(oswMerged == TRUE){
     # Get precursor information from merged.osw file
     oswName <- unique(fileInfo[["featureFile"]])
-    precursors <- fetchPrecursorsInfo(oswName, runType)
+    precursors <- fetchPrecursorsInfo(oswName, runType, useDetecting = TRUE, useIdentifying = FALSE)
   } else {
     # Iterate over each file and collect precursor information
     precursors <- data.frame("transition_group_id" = integer())
     for(i in 1:nrow(fileInfo)){
       oswName <- fileInfo[["featureFile"]][[i]]
-      temp <- fetchPrecursorsInfo(oswName, runType)
+      temp <- fetchPrecursorsInfo(oswName, runType, useDetecting = TRUE, useIdentifying = FALSE)
       precursors <- merge(precursors, temp, by = c("transition_group_id", all.x = TRUE, all.y = TRUE))
     }
   }

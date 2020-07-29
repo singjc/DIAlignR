@@ -211,6 +211,7 @@ getAnalytesQuery <- function(maxFdrQuery, oswMerged = TRUE, filename = NULL,
 #' @seealso \code{\link{fetchPrecursorsInfo}}
 #' @keywords internal
 getPrecursorsQuery <- function(runType = "DIA_Proteomics"){
+  if ( runType=="DIA_Proteomics" ){
   query <- "SELECT PRECURSOR.ID AS transition_group_id,
       TRANSITION_PRECURSOR_MAPPING.TRANSITION_ID AS transition_id,
       PRECURSOR_PEPTIDE_MAPPING.PEPTIDE_ID AS peptide_id,
@@ -222,6 +223,24 @@ getPrecursorsQuery <- function(runType = "DIA_Proteomics"){
       INNER JOIN PRECURSOR_PEPTIDE_MAPPING ON PRECURSOR_PEPTIDE_MAPPING.PRECURSOR_ID = PRECURSOR.ID
       INNER JOIN PEPTIDE ON PRECURSOR_PEPTIDE_MAPPING.PEPTIDE_ID = PEPTIDE.ID
       ORDER BY transition_group_id, transition_id;"
+  } else if ( runType=="DIA_Proteomics_IPF" ){
+    query <- "SELECT PRECURSOR.ID AS transition_group_id,
+    TRANSITION_PRECURSOR_MAPPING.TRANSITION_ID AS transition_id,
+    PRECURSOR_PEPTIDE_MAPPING.PEPTIDE_ID AS peptide_id,
+    PEPTIDE.MODIFIED_SEQUENCE AS sequence,
+    PRECURSOR.CHARGE AS charge,
+    PRECURSOR.GROUP_LABEL AS group_label,
+    TRANSITION.DETECTING AS detecting_transitions,
+    TRANSITION.IDENTIFYING AS identifying_transitions
+    FROM PRECURSOR
+    INNER JOIN TRANSITION_PRECURSOR_MAPPING ON TRANSITION_PRECURSOR_MAPPING.PRECURSOR_ID = PRECURSOR.ID
+    INNER JOIN PRECURSOR_PEPTIDE_MAPPING ON PRECURSOR_PEPTIDE_MAPPING.PRECURSOR_ID = PRECURSOR.ID
+    INNER JOIN PEPTIDE ON PRECURSOR_PEPTIDE_MAPPING.PEPTIDE_ID = PEPTIDE.ID
+    INNER JOIN TRANSITION ON TRANSITION.ID = TRANSITION_PRECURSOR_MAPPING.TRANSITION_ID
+    ORDER BY transition_group_id, transition_id;"
+  } else {
+    stop( sprintf("%s is not a valid option for parameter runType.") )
+  }
   query
 }
 
@@ -274,8 +293,8 @@ getFeaturesQuery <- function(runType = "DIA_Proteomics"){
 #' @keywords internal
 getPrecursorsQueryID <- function(analytes, runType = "DIA_Proteomics"){
   selectAnalytes <- paste0(" transition_group_id IN ('", paste(analytes, collapse="','"),"')")
-
-  query <- paste0("SELECT PRECURSOR.ID AS transition_group_id,
+  if ( runType=="DIA_Proteomics" ){
+    query <- paste0("SELECT PRECURSOR.ID AS transition_group_id,
       TRANSITION_PRECURSOR_MAPPING.TRANSITION_ID AS transition_id,
       PRECURSOR_PEPTIDE_MAPPING.PEPTIDE_ID AS peptide_id,
       PEPTIDE.MODIFIED_SEQUENCE AS sequence,
@@ -286,6 +305,25 @@ getPrecursorsQueryID <- function(analytes, runType = "DIA_Proteomics"){
       INNER JOIN PRECURSOR_PEPTIDE_MAPPING ON PRECURSOR_PEPTIDE_MAPPING.PRECURSOR_ID = PRECURSOR.ID
       INNER JOIN PEPTIDE ON PRECURSOR_PEPTIDE_MAPPING.PEPTIDE_ID = PEPTIDE.ID
       WHERE ", selectAnalytes, "
-      ORDER BY transition_group_id, transition_id;")
+        ORDER BY transition_group_id, transition_id;")
+  } else if ( runType=="DIA_Proteomics_IPF" ){
+    query <- paste0("SELECT PRECURSOR.ID AS transition_group_id,
+      TRANSITION_PRECURSOR_MAPPING.TRANSITION_ID AS transition_id,
+      PRECURSOR_PEPTIDE_MAPPING.PEPTIDE_ID AS peptide_id,
+      PEPTIDE.MODIFIED_SEQUENCE AS sequence,
+      PRECURSOR.CHARGE AS charge,
+      PRECURSOR.GROUP_LABEL AS group_labell,
+      TRANSITION.DETECTING AS detecting_transitions,
+      TRANSITION.IDENTIFYING AS identifying_transitions
+      FROM PRECURSOR
+      INNER JOIN TRANSITION_PRECURSOR_MAPPING ON TRANSITION_PRECURSOR_MAPPING.PRECURSOR_ID = PRECURSOR.ID
+      INNER JOIN PRECURSOR_PEPTIDE_MAPPING ON PRECURSOR_PEPTIDE_MAPPING.PRECURSOR_ID = PRECURSOR.ID
+      INNER JOIN PEPTIDE ON PRECURSOR_PEPTIDE_MAPPING.PEPTIDE_ID = PEPTIDE.ID
+      INNER JOIN TRANSITION ON TRANSITION.ID = TRANSITION_PRECURSOR_MAPPING.TRANSITION_ID
+      WHERE ", selectAnalytes, "
+        ORDER BY transition_group_id, transition_id;")
+  } else {
+    stop( sprintf("%s is not a valid option for parameter runType.") )
+  }
   query
 }

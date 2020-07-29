@@ -58,7 +58,7 @@
 #'
 #' @export
 alignIPFTargetedRuns <- function(dataPath, outFile = "DIAlignR.csv", oswMerged = TRUE, runs = NULL,
-                              runType = "DIA_Proteomics", maxFdrQuery = 0.05,
+                              runType = "DIA_Proteomics_IPF", maxFdrQuery = 0.05,
                               XICfilter = "sgolay", polyOrd = 4, kernelLen = 9,
                               globalAlignment = "loess", globalAlignmentFdr = 0.01, globalAlignmentSpan = 0.1,
                               RSEdistFactor = 3.5, normalization = "mean", simMeasure = "dotProductMasked",
@@ -69,7 +69,8 @@ alignIPFTargetedRuns <- function(dataPath, outFile = "DIAlignR.csv", oswMerged =
                               analyteFDR = 0.01,
                               unalignedFDR = 0.01, alignedFDR = 0.05,
                               baselineType = "base_to_base", integrationType = "intensity_sum",
-                              fitEMG = FALSE, recalIntensity = FALSE, fillMissing = TRUE, smoothPeakArea = FALSE){
+                              fitEMG = FALSE, recalIntensity = FALSE, fillMissing = TRUE, smoothPeakArea = FALSE,
+                              useDetecting = TRUE, useIdentifying = FALSE, maxIdentifyingPEP = 0.3 ){
   ########## Check if filter length is odd for Savitzky-Golay filter.  #########
   if( (kernelLen %% 2) != 1){
     # Check smoothing parameters
@@ -88,7 +89,7 @@ alignIPFTargetedRuns <- function(dataPath, outFile = "DIAlignR.csv", oswMerged =
   
   ######### Get Precursors from the query and respectve chromatogram indices. ######
   # Get all the precursor IDs, transition IDs, Peptide IDs, Peptide Sequence Modified, Charge.
-  precursors <- getPrecursors(fileInfo, oswMerged, runType)
+  precursors <- getPrecursors(fileInfo, oswMerged, runType, useDetecting = useDetecting, useIdentifying = useIdentifying)
   
   ################ Get OpenSWATH peak-groups and their retention times. ##########
   features <- getFeatures(fileInfo, maxFdrQuery, runType)
