@@ -13,7 +13,7 @@ mappedRTfromAlignObj(refRT, tVec.ref, tVec.eXp, AlignObj)
 
 \item{tVec.eXp}{(numeric) time vector of experiment run.}
 
-\item{AlignObj}{(S4 object)}
+\item{AlignObj}{(S4 object) must have indexA_aligned, indexB_aligned and score as slots.}
 }
 \value{
 (numeric)
@@ -35,6 +35,7 @@ Shubham Gupta, \email{shubh.gupta@mail.utoronto.ca}
 
 ORCID: 0000-0003-3500-8152
 
-License: (c) Author (2019) + MIT
+License: (c) Author (2019) + GPL-3
 Date: 2019-12-13
 }
+\keyword{internal}

@@ -2,8 +2,9 @@
 % Please edit documentation in R/get_peaks_chromatograms.R
 \name{extractXIC_group}
 \alias{extractXIC_group}
-\title{Extract XICs of all transitions requested in chromIndices.}
+\title{Extract XICs of chromIndices}
 \usage{
+<<<<<<< HEAD
 extractXIC_group(
   mz,
   chromIndices,
@@ -11,23 +12,20 @@ extractXIC_group(
   SgolayFiltOrd = 4,
   SgolayFiltLen = 9
 )
+=======
+extractXIC_group(mz, chromIndices)
+>>>>>>> a73122ae9a62d6a347f9ff0e7d9569beb8752b66
 }
 \arguments{
 \item{mz}{(mzRpwiz object)}
 
 \item{chromIndices}{(vector of Integers) Indices of chromatograms to be extracted.}
-
-\item{XICfilter}{(string) This must be one of the strings "sgolay", "none".}
-
-\item{SgolayFiltOrd}{(integer) It defines the polynomial order of filer.}
-
-\item{SgolayFiltLen}{(integer) Must be an odd number. It defines the length of filter.}
 }
 \value{
 A list of data-frames. Each data frame has elution time and intensity of fragment-ion XIC.
 }
 \description{
-Extracts XICs using mz object. Generally Savitzky–Golay filter is used, however, filter can be turned-off as well.
+Extracts XICs using mz object. Each chromatogram represents a transition of precursor.
 }
 \examples{
 dataPath <- system.file("extdata", package = "DIAlignR")
@@ -35,7 +33,7 @@ mzmlName<-paste0(dataPath,"/mzml/hroest_K120809_Strep10\%PlasmaBiolRepl2_R04_SW_
 mz <- mzR::openMSfile(mzmlName, backend = "pwiz")
 chromIndices <- c(37L, 38L, 39L, 40L, 41L, 42L)
 \dontrun{
-XIC_group <- extractXIC_group(mz, chromIndices, SgolayFiltOrd = 4, SgolayFiltLen = 13)
+XIC_group <- extractXIC_group(mz, chromIndices)
 }
 }
 \author{
@@ -43,6 +41,7 @@ Shubham Gupta, \email{shubh.gupta@mail.utoronto.ca}
 
 ORCID: 0000-0003-3500-8152
 
-License: (c) Author (2019) + MIT
+License: (c) Author (2019) + GPL-3
 Date: 2019-12-13
 }
+\keyword{internal}

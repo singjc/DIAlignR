@@ -8,17 +8,17 @@ AlignObjOutput is the output from getAlignObjs fucntion.}
 plotAlignedAnalytes(
   AlignObjOutput,
   plotType = "All",
-  DrawAlignR = FALSE,
+  outFile = "AlignedAnalytes.pdf",
   annotatePeak = FALSE,
   saveFigs = FALSE
 )
 }
 \arguments{
-\item{AlignObjOutput}{(list) The list contains AlignObj, raw XICs for reference and experiment, and reference-peak label.}
+\item{AlignObjOutput}{(list) list contains fileInfo, AlignObj, raw XICs for reference and experiment, and reference-peak label.}
 
-\item{plotType}{This must be one of the strings "All", "onlyUnaligned" and "onlyAligned".}
+\item{plotType}{(string) must be one of the strings "All", "onlyUnaligned" and "onlyAligned".}
 
-\item{DrawAlignR}{(logical) TRUE: ggplot objects will be returned.}
+\item{outFile}{(string) name of the output pdf file.}
 
 \item{annotatePeak}{(logical) TRUE: Peak boundaries and apex will be highlighted.}
 
@@ -35,7 +35,7 @@ AlignObjOutput is the output from getAlignObjs fucntion.
 dataPath <- system.file("extdata", package = "DIAlignR")
 runs <- c("hroest_K120809_Strep0\%PlasmaBiolRepl2_R04_SW_filt",
  "hroest_K120809_Strep10\%PlasmaBiolRepl2_R04_SW_filt")
-AlignObjOutput <- getAlignObjs(analytes = "QFNNTDIVLLEDFQK_3", runs, dataPath = dataPath)
+AlignObjOutput <- getAlignObjs(analytes = 4618L, runs, dataPath = dataPath)
 plotAlignedAnalytes(AlignObjOutput)
 }
 \author{
@@ -43,6 +43,6 @@ Shubham Gupta, \email{shubh.gupta@mail.utoronto.ca}
 
 ORCID: 0000-0003-3500-8152
 
-License: (c) Author (2019) + MIT
+License: (c) Author (2019) + GPL-3
 Date: 2019-12-13
 }

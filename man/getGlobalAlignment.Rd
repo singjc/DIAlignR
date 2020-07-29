@@ -8,44 +8,50 @@ getGlobalAlignment(
   oswFiles,
   ref,
   eXp,
+<<<<<<< HEAD
   maxFdrGlobal,
   spanvalue = 0.1,
   fitType = "loess"
+=======
+  fitType = "linear",
+  maxFdrGlobal = 0.01,
+  spanvalue = 0.1
+>>>>>>> a73122ae9a62d6a347f9ff0e7d9569beb8752b66
 )
 }
 \arguments{
-\item{oswFiles}{(list of data-frames) it is output from getOswFiles function.}
+\item{oswFiles}{(list of data-frames) it is output from getFeatures function.}
 
 \item{ref}{(string) Must be a combination of "run" and an iteger e.g. "run2".}
 
 \item{eXp}{(string) Must be a combination of "run" and an iteger e.g. "run2".}
 
+\item{fitType}{(string) Must be from "loess" or "linear".}
+
 \item{maxFdrGlobal}{(numeric) A numeric value between 0 and 1. Features should have m-score lower than this value for participation in global fit.}
 
 \item{spanvalue}{(numeric) Spanvalue for LOESS fit. For targeted proteomics 0.1 could be used.}
-
-\item{fitType}{(char) Must be from "loess" or "linear".}
 }
 \value{
 An object of class "loess".
 }
 \description{
-This function selects features from oswFiles which has m-score < maxFdrLoess. It then fit linear/loess regression on these feature.
+This function selects features from oswFiles which has m-score < maxFdrLoess. It fits linear/loess regression on these feature.
 Retention-time mapping is established from reference to experiment run.
 }
 \examples{
 data(oswFiles_DIAlignR, package="DIAlignR")
-Loess.fit <- getGlobalAlignment(oswFiles = oswFiles_DIAlignR, ref = "run1", eXp = "run2",
- maxFdrGlobal = 0.05, spanvalue = 0.1, fit = "loess")
+lm.fit <- getGlobalAlignment(oswFiles = oswFiles_DIAlignR, ref = "run1", eXp = "run2",
+ fitType = "linear", maxFdrGlobal = 0.05, spanvalue = 0.1)
 }
 \seealso{
-\code{\link{getOswFiles}}
+\code{\link{getFeatures}}
 }
 \author{
 Shubham Gupta, \email{shubh.gupta@mail.utoronto.ca}
 
 ORCID: 0000-0003-3500-8152
 
-License: (c) Author (2019) + MIT
+License: (c) Author (2019) + GPL-3
 Date: 2019-12-14
 }

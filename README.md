@@ -4,7 +4,26 @@ DIAlignR is an R package for retention time alignment of targeted mass spectrome
 [![Travis build status](https://travis-ci.org/shubham1637/DIAlignR.svg?branch=master)](https://travis-ci.org/shubham1637/DIAlignR)
 
 # Documentation
-For documentation please see [our vignette](http://htmlpreview.github.io/?https://github.com/shubham1637/DIAlignR/blob/master/doc/DIAlignR-vignette.html).
+For documentation please see [our vignette](https://htmlpreview.github.io/?https://github.com/shubham1637/DIAlignR/master/vignettes/DIAlignR-vignette.html).
+
+# Developing C++ code
+```
+cd DIAlignR
+mkdir build && cd build
+cmake -B. -H.. 
+make clean && make && make test
+make runTest3
+cd ..
+```
+
+Documenting C++ code
+```
+sudo apt install doxygen doxygen-gui 
+sudo apt install graphviz
+cd DIAlignR
+cd src
+doxygen doc/Doxyfile
+```
 
 # Citation
 If you use the provided algorithms or the package, please cite our paper:

@@ -10,7 +10,9 @@ filenamesFromMZML(dataPath)
 \item{dataPath}{(char) Path to mzml and osw directory.}
 }
 \value{
-A named vector.
+A dataframe with two columns:
+\item{runName}{(string) contain respective mzML names without extension.}
+\item{chromatogramFile}{(string) Path to the chromatogram file.}
 }
 \description{
 Reads all mzML names avaialble in the directory.
@@ -26,6 +28,7 @@ Shubham Gupta, \email{shubh.gupta@mail.utoronto.ca}
 
 ORCID: 0000-0003-3500-8152
 
-License: (c) Author (2019) + MIT
+License: (c) Author (2019) + GPL-3
 Date: 2019-12-14
 }
+\keyword{internal}

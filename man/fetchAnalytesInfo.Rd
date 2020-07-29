@@ -11,8 +11,12 @@ fetchAnalytesInfo(
   analytes,
   filename,
   runType,
+<<<<<<< HEAD
   analyteInGroupLabel = FALSE,
   identifying = FALSE
+=======
+  analyteInGroupLabel = FALSE
+>>>>>>> a73122ae9a62d6a347f9ff0e7d9569beb8752b66
 )
 }
 \arguments{
@@ -71,6 +75,7 @@ Shubham Gupta, \email{shubh.gupta@mail.utoronto.ca}
 
 ORCID: 0000-0003-3500-8152
 
-License: (c) Author (2019) + MIT
+License: (c) Author (2019) + GPL-3
 Date: 2019-12-13
 }
+\keyword{internal}

@@ -10,8 +10,7 @@ getQuery(
   analytes = NULL,
   filename = NULL,
   runType = "DIA_Proteomics",
-  analyteInGroupLabel = FALSE,
-  identifying = FALSE
+  analyteInGroupLabel = FALSE
 )
 }
 \arguments{
@@ -21,7 +20,7 @@ getQuery(
 
 \item{analytes}{(vector of strings) transition_group_ids for which features are to be extracted. analyteInGroupLabel must be set according the pattern used here.}
 
-\item{filename}{(string) as mentioned in RUN table of osw files..}
+\item{filename}{(string) as mentioned in RUN table of osw files.}
 
 \item{runType}{(char) This must be one of the strings "DIA_proteomics", "DIA_Metabolomics".}
 
@@ -40,6 +39,7 @@ Shubham Gupta, \email{shubh.gupta@mail.utoronto.ca}
 
 ORCID: 0000-0003-3500-8152
 
-License: (c) Author (2019) + MIT
+License: (c) Author (2019) + GPL-3
 Date: 2019-12-14
 }
+\keyword{internal}

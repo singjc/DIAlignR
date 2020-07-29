@@ -21,8 +21,7 @@ library(lattice)
 dataPath <- system.file("extdata", package = "DIAlignR")
 runs <- c("hroest_K120809_Strep0\%PlasmaBiolRepl2_R04_SW_filt",
  "hroest_K120809_Strep10\%PlasmaBiolRepl2_R04_SW_filt")
-AlignObjOutput <- getAlignObjs(analytes = "QFNNTDIVLLEDFQK_3", runs, dataPath = dataPath,
- objType = "medium")
+AlignObjOutput <- getAlignObjs(analytes = 4618L, runs, dataPath = dataPath, objType = "medium")
 plotAlignmentPath(AlignObjOutput)
 }
 \author{
@@ -30,6 +29,6 @@ Shubham Gupta, \email{shubh.gupta@mail.utoronto.ca}
 
 ORCID: 0000-0003-3500-8152
 
-License: (c) Author (2019) + MIT
+License: (c) Author (2019) + GPL-3
 Date: 2019-12-13
 }

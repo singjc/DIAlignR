@@ -25,8 +25,15 @@ namespace {
   }
 }
 
+
 namespace DIAlign
 {
+
+using namespace Traceback;
+
+namespace AffineAlignment
+{
+
 // It performs affine alignment on similarity matrix and fills three matrices M, A and B, and corresponding traceback matrices.
 void doAffineAlignment(AffineAlignObj& affineAlignObj, const SimMatrix& s, double go, double ge, bool OverlapAlignment){
   validate(affineAlignObj, s, go, ge);
@@ -194,9 +201,10 @@ void getAffineAlignedIndices(AffineAlignObj &affineAlignObj, int bandwidth){
   int COL_SIZE = (affineAlignObj.signalB_len)+1;
 
   if(affineAlignObj.FreeEndGaps == true){
-    // Overlap Alignment
-    // Maximum score and corresponding indices along the last column and last row is searched across all three matrices.
-    // Matrix name and maximum score indices are passed by reference.
+    /// Overlap Alignment
+    ///
+    /// Maximum score and corresponding indices along the last column and last row is searched across all three matrices.
+    /// Matrix name and maximum score indices are passed by reference.
     affineAlignmentScore = getOlapAffineAlignStartIndices(affineAlignObj.M, affineAlignObj.A, affineAlignObj.B, ROW_SIZE, COL_SIZE, ROW_IDX, COL_IDX, MatName);
     if(ROW_IDX != affineAlignObj.signalA_len){
       // Maximum score is obtained in last column. Align all row indices below max-score-index to NA.
@@ -509,4 +517,5 @@ double getForwardSim(const SimMatrix& s, bool* simPath){
  *
  ***/
 
+} // namespace AffineAlignment
 } // namespace DIAlign

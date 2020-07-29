@@ -7,9 +7,15 @@
 getAlignObj(
   XICs.ref,
   XICs.eXp,
+<<<<<<< HEAD
   Loess.fit,
   adaptiveRT,
   samplingTime,
+=======
+  globalFit,
+  alignType,
+  adaptiveRT,
+>>>>>>> a73122ae9a62d6a347f9ff0e7d9569beb8752b66
   normalization,
   simType,
   goFactor,
@@ -28,11 +34,11 @@ getAlignObj(
 
 \item{XICs.eXp}{List of extracted ion chromatograms from experiment run.}
 
-\item{Loess.fit}{LOESS fit object between reference and experiment run.}
+\item{globalFit}{Linear or loess fit object between reference and experiment run.}
+
+\item{alignType}{Available alignment methods are "global", "local" and "hybrid".}
 
 \item{adaptiveRT}{(numeric) Similarity matrix is not penalized within adaptive RT.}
-
-\item{samplingTime}{(numeric) Time difference between two data-points in each chromatogram. For hybrid and local alignment, samples are assumed to be equally time-spaced.}
 
 \item{normalization}{(character) Must be selected from "mean", "l2".}
 
@@ -71,10 +77,10 @@ data(XIC_QFNNTDIVLLEDFQK_3_DIAlignR, package="DIAlignR")
 data(oswFiles_DIAlignR, package="DIAlignR")
 XICs.ref <- XIC_QFNNTDIVLLEDFQK_3_DIAlignR[["run1"]][["14299_QFNNTDIVLLEDFQK/3"]]
 XICs.eXp <- XIC_QFNNTDIVLLEDFQK_3_DIAlignR[["run2"]][["14299_QFNNTDIVLLEDFQK/3"]]
-Loess.fit <- getGlobalAlignment(oswFiles_DIAlignR, ref = "run1", eXp = "run2",
+globalFit <- getGlobalAlignment(oswFiles_DIAlignR, ref = "run1", eXp = "run2",
  maxFdrGlobal = 0.05, spanvalue = 0.1)
-AlignObj <- getAlignObj(XICs.ref, XICs.eXp, Loess.fit, adaptiveRT = 77.82315,
- samplingTime = 3.414, normalization = "mean", simType = "dotProductMasked", goFactor = 0.125,
+AlignObj <- getAlignObj(XICs.ref, XICs.eXp, globalFit, alignType = "hybrid", adaptiveRT = 77.82315,
+ normalization = "mean", simType = "dotProductMasked", goFactor = 0.125,
   geFactor = 40, cosAngleThresh = 0.3, OverlapAlignment = TRUE, dotProdThresh = 0.96,
   gapQuantile = 0.5, hardConstrain = FALSE, samples4gradient = 100, objType = "light")
 }
@@ -86,6 +92,6 @@ Shubham Gupta, \email{shubh.gupta@mail.utoronto.ca}
 
 ORCID: 0000-0003-3500-8152
 
-License: (c) Author (2019) + MIT
+License: (c) Author (2019) + GPL-3
 Date: 2019-12-13
 }

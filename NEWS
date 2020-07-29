@@ -1,33 +1,66 @@
+CHANGES IN VERSION 1.1.5 (May 07, 2020)
+------------------------
++ ananlyteFDR to limit features for multipeptide.
++ Removed decoy from features.
++ BugFix alignment if all intensities are zero.
++ Fixed printed stats.
+
+CHANGES IN VERSION 0.99.26 (April 21, 2020)
+------------------------
++ Fixed visualization function.
++ Calculating global alignment before iterating over multipeptides.
++ Added summary after the alignment.
++ Fixed area integrator for missing boundaries.
+
+CHANGES IN VERSION 0.99.25 (April 19, 2020)
+------------------------
++ Added filePath, Spectra file name, and RunID in one data frame. No need to pass datapath to each function.
++ Separate functions to get precursor IDs, OpenSWATH features and chromatogram indices for each precursor across runs.
++ Using multi-peptide and updating it in the parent frame.
++ Added Alignment rank column.
++ Copied C++ code for peak integration from OpenMS.
+
+CHANGES IN VERSION 0.99.13 (March 31, 2020)
+------------------------
++ Added as.list for S4 objects
+
+CHANGES IN VERSION 0.99.12 (March 02, 2020)
+------------------------
++ Added boxcar, Gaussian kernel and loess for chromatogram smoothing
++ Started documentation for C++ code
++ Added support for Microsoft Visual Studio compiler
++ Using lists instead of matrix while updating RT and intensities
++ Moved python code out of the src directory
+
+
+CHANGES IN VERSION 0.99.11 (February 04, 2020)
+------------------------
++ Made changes as suggested in initial review. Updated man/ pages associated with function.
++ Link to the file for generating example data is updated.
+
+
+CHANGES IN VERSION 0.99.10 (January 22, 2020)
+------------------------
++ Made changes as suggested in initial review. https://github.com/Bioconductor/Contributions/issues/1328#issuecomment-576806498
+
 CHANGES IN VERSION 0.99.9
 ------------------------
-Added option to include mz pointer in getOswFiles and getXIC4AlignObj
++ Added option to include mz pointer in getOswFiles and getXIC4AlignObj
 
 
 CHANGES IN VERSION 0.99.8
 ------------------------
-Removed R version dependency, have rda files instead of Rdata
++ Removed R version dependency, have rda files instead of Rdata
 
 
 CHANGES IN VERSION 0.99.7
 ------------------------
-Lowered R version dependency
++ Lowered R version dependency
 
 
 CHANGES IN VERSION 0.99.4
 ------------------------
-Upadted version number
-
-
-CHANGES IN VERSION 1.2.3
-------------------------
-Corrected tests
-
-
-CHANGES IN VERSION 1.2.2
-------------------------
-Updated tests to reflect mzR updates, included travis-CI build
-
-
-CHANGES IN VERSION 1.2.0
-------------------------
-Moved package to Bioconductor
++ Upadted version number
++ Corrected tests
++ Updated tests to reflect mzR updates, included travis-CI build
++ Moved package to Bioconductor

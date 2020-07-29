@@ -15,17 +15,21 @@ test_that("test_readChromatogramHeader",{
                           stringsAsFactors=FALSE)
   expect_identical(dim(readChromatogramHeader(mzmlName)), c(72L, 10L))
   expect_equal(readChromatogramHeader(mzmlName)[1:3,1:3], expOutput[,1:3], tolerance=1e-6)
+
   mzmlName <- "getError"
   expect_error(readChromatogramHeader(mzmlName))
 })
 
 test_that("test_getMZMLpointers",{
   dataPath <- system.file("extdata", package = "DIAlignR")
-  runs <- c("run0" = "hroest_K120808_Strep10%PlasmaBiolRepl1_R03_SW_filt",
-           "run1" = "hroest_K120809_Strep0%PlasmaBiolRepl2_R04_SW_filt",
-           "run2" = "hroest_K120809_Strep10%PlasmaBiolRepl2_R04_SW_filt")
-  outData <- getMZMLpointers(dataPath = dataPath, runs = runs)
-  expect_is(outData[["run0"]]$mz, "mzRpwiz")
-  expect_is(outData[["run1"]]$mz, "mzRpwiz")
-  expect_is(outData[["run2"]]$mz, "mzRpwiz")
+
+  fileInfo <- data.frame("chromatogramFile" = c(file.path(dataPath, "mzml", "hroest_K120808_Strep10%PlasmaBiolRepl1_R03_SW_filt.chrom.mzML"),
+                                    file.path(dataPath, "mzml", "hroest_K120809_Strep0%PlasmaBiolRepl2_R04_SW_filt.chrom.mzML"),
+                                    file.path(dataPath, "mzml", "hroest_K120809_Strep10%PlasmaBiolRepl2_R04_SW_filt.chrom.mzML")),
+             row.names = c("run0", "run1", "run2"),
+             stringsAsFactors=FALSE)
+  outData <- getMZMLpointers(fileInfo)
+  expect_is(outData[["run0"]], "mzRpwiz")
+  expect_is(outData[["run1"]], "mzRpwiz")
+  expect_is(outData[["run2"]], "mzRpwiz")
 })
