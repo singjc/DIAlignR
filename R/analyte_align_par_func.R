@@ -28,7 +28,10 @@ analyte_align_par_func <- function( oswdata, function_param_input ){
   
   # Select reference run based on m-score
   refRunIdx <- getRefRun(oswdata, analyte)
+  ref_run_id <- oswdata$run_id[ refRunIdx ]
+  ref_osw_data <- oswdata[refRunIdx, ]
   cat( "refRunIdx\n", refRunIdx, "\n", file=redirect_output, append = T )
+  cat( "ref File: ", ref_osw_data$filename[1], "\n", file=redirect_output, append = T )
   oswdata[refRunIdx, ] %>%
     dplyr::group_by( transition_group_id ) %>%
     dplyr::filter(transition_group_id == analyte  & m_score==min(m_score)  ) %>%
@@ -58,7 +61,7 @@ analyte_align_par_func <- function( oswdata, function_param_input ){
   cat(sprintf("Reference Peak at %s with boundaries (%s, %s) and intensity of %s", refPeak$RT, refPeak$leftWidth, refPeak$rightWidth, refPeak$Intensity), file = redirect_output, sep = "\n")
   
   # Get XIC_group from reference run. if missing, go to next analyte.
-  ref <- names(function_param_input$runs)[refRunIdx]
+  ref <- names(function_param_input$runs)[ grepl(ref_run_id, names(function_param_input$runs)) ]
   exps <- setdiff(names(function_param_input$runs), ref)
   chromIndices <- selectChromIndices(oswdata, runname = ref, analyte = analyte, return_index=function_param_input$return_index )
   
@@ -183,7 +186,7 @@ analyte_align_par_func <- function( oswdata, function_param_input ){
     analyte_alignment_results$alignment_log <- alignment_log
     
   }
-  data.table::fwrite( analyte_run_pair_results, paste("analyte_alignment_results_align_par_func_worker_", unique(oswdata$worker_id_num)[[1]],".tsv", sep="" ), sep="\t") 
+  data.table::fwrite( analyte_alignment_results, paste("analyte_alignment_results_align_par_func_worker_", unique(oswdata$worker_id_num)[[1]],".tsv", sep="" ), sep="\t") 
   ## Outer analyte timer end
   analyte_end_time <- tictoc::toc(quiet = T)
   

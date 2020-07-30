@@ -115,9 +115,12 @@ alignTargetedRuns <- function(dataPath, alignType = "hybrid", analyteInGroupLabe
     eXp <- "run7"
     maxFdrQuery=1
     maxFdrLoess=0.01
-    analyte <- "analyte: .(Acetyl)AAAAAAAGDS(Phospho)DSWDADAFSVEDPVR_3"
+    analyte <- ".(Acetyl)AAAAAAAGDS(Phospho)DSWDADAFSVEDPVR_3"
     ref <- "run13"
     eXp <- "run5"
+    analytes <- "AALIGS(Phospho)LGSIFK(Label:13C(6)15N(2))_2"
+    ref <- "run11"
+    eXp <- "run2"
   }
   
   # Check if filter length is odd for Savitzky-Golay filter.

@@ -121,9 +121,11 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     eXp <- "run7"
     maxFdrQuery=1
     maxFdrLoess=0.01
+    analyteFDR=1
     analyte <- "analyte: .(Acetyl)AAAAAAAGDS(Phospho)DSWDADAFSVEDPVR_3"
     ref <- "run13"
     eXp <- "run5"
+    cached_mzPntrsdb<-"/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/George_lib_repeat2/DIAlignR_Analysis/data/sqmass/cached_chromatogram_data.mzPntrs"
   }
   
   
@@ -339,7 +341,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   end_time <- Sys.time()
   message("Execution time for alignment = ", end_time - start_time)
   
-  parallel::stopCluster( cluster )
+  # parallel::stopCluster( cluster )
   
   func_call_end_time <- Sys.time()
   
