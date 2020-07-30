@@ -186,7 +186,7 @@ analyte_align_par_func <- function( oswdata, function_param_input ){
     analyte_alignment_results$alignment_log <- alignment_log
     
   }
-  data.table::fwrite( analyte_alignment_results, paste("analyte_alignment_results_align_par_func_worker_", unique(oswdata$worker_id_num)[[1]],".tsv", sep="" ), sep="\t") 
+  # data.table::fwrite( analyte_alignment_results, paste("analyte_alignment_results_align_par_func_worker_", unique(oswdata$worker_id_num)[[1]],".tsv", sep="" ), sep="\t") 
   ## Outer analyte timer end
   analyte_end_time <- tictoc::toc(quiet = T)
   
