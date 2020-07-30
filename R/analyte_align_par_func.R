@@ -114,6 +114,12 @@ analyte_align_par_func <- function( oswdata, function_param_input ){
     return(  oswdata_runpairs )
   })
   
+  ## Check to make sure oswdata_runpairs is not empty
+  if ( nrow(oswdata_runpairs) == 0 ) {
+    cat(sprintf("WARN: There was no data for oswdata_runpairs.\n"), file = redirect_output, sep = "\n")
+    oswdata_runpairs <- NULL
+    return(  oswdata_runpairs )
+  }
   
   ## Set-Up for multiple processing
   #future::plan( list(future::tweak( future::multicore, workers=10L )) )

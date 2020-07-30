@@ -126,6 +126,9 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     ref <- "run13"
     eXp <- "run5"
     cached_mzPntrsdb<-"/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/George_lib_repeat2/DIAlignR_Analysis/data/sqmass/cached_chromatogram_data.mzPntrs"
+    analytes <- "DDADPTS(Phospho)SNGGNSSIIK(Label:13C(6)15N(2))_2"
+    ref <- "run12"
+    eXp <- "run11"
   }
   
   
@@ -196,7 +199,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
           # Collect all the pointers for each mzML file.
           message("Collecting metadata from sqMass files.")
           # mzPntrs <- getMZMLpointers(dataPath, runs)
-          mzPntrs <- DIAlignR::getsqMassPntrs(dataPath, runs, nameCutPattern = nameCutPattern, chrom_ext = chrom_ext, .parallel = FALSE)
+          mzPntrs <- getsqMassPntrs(dataPath, runs, nameCutPattern = nameCutPattern, chrom_ext = chrom_ext, .parallel = FALSE)
           message("Metadata is collected from sqMass files.")
           return_index <- "chromatogramIndex"
           function_param_input$return_index <- return_index

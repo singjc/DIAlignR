@@ -81,7 +81,7 @@ FROM CHROMATOGRAM
           # message(sprintf("\rCacheing mzML for %s of %s runs", run, length(filenames$runs)))
           ## Get path for current chromatogram file
           chromatogram_file_i <-  chromFiles[ grepl(current_filename, names(chromFiles)) ][[1]]
-          mzPntrs <- getMZandChromHead( chromatogram_file_i = chromatogram_file_i, run = run , sql_query = sql_query, mzPntrs = mzPntrs )
+          mzPntrs[[run]] <- getMZandChromHead( chromatogram_file_i = chromatogram_file_i, run = run , sql_query = sql_query, mzPntrs = mzPntrs )
           
           ## End timer
           exec_time <- tictoc::toc(quiet = T)
