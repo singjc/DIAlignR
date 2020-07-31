@@ -79,7 +79,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
         ##TODO Add a stop condition, otherwise loop will for on forever
       }
       cat( sprintf("This is the Loess.fit model:"), file = function_param_input$redirect_output , sep = "\n" )
-      cat( sprintf("%s", Loess.fit), file = function_param_input$redirect_output , sep = "\n" )
+      cat( sprintf("%s", pair), file = function_param_input$redirect_output , sep = "\n" )
       if ( is.null(Loess.fit) ) {
         cat( sprintf("Warn: Was unable to getGlobalAlignment even after permuting different maxFdrLoess thresholds...Skipping...%s", pair), file = function_param_input$redirect_output , sep = "\n" )
         return( NULL ) #TODO change this return to something more representible maybe
@@ -93,14 +93,15 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
     adaptiveRT <- function_param_input$RSEdistFactor*Loess.fit$s
     cat( sprintf("Getting retention time in experiment run mapped to ref run RT"), file = function_param_input$redirect_output , sep = "\n" )
     # Get retention time in experiment run mapped to reference run retention time.
-    eXpRT <- DIAlignR:::getMappedRT(refRT = function_param_input$refPeak$RT, XICs.ref = XICs.ref, XICs.eXp = XICs.eXp, Loess.fit = Loess.fit, alignType = function_param_input$alignType, adaptiveRT = adaptiveRT, function_param_input$samplingTime,
+    eXpRT <- getMappedRT(refRT = function_param_input$refPeak$RT, XICs.ref = XICs.ref, XICs.eXp = XICs.eXp, Loess.fit = Loess.fit, alignType = function_param_input$alignType, adaptiveRT = adaptiveRT, function_param_input$samplingTime,
                          function_param_input$normalization, function_param_input$simMeasure, function_param_input$goFactor, function_param_input$geFactor, function_param_input$cosAngleThresh,
                          function_param_input$OverlapAlignment, function_param_input$dotProdThresh, function_param_input$gapQuantile, function_param_input$hardConstrain,
                          function_param_input$samples4gradient)
+    cat( sprintf("eXpRT: %s", eXpRT), file = function_param_input$redirect_output , sep = "\n" ) 
     cat( sprintf("Picking Nearest Feature"), file = function_param_input$redirect_output , sep = "\n" )
     eXp_feature <- pickNearestFeature(eXpRT, analyte, oswdata_runpair_data, runname = eXp,
                                       adaptiveRT = adaptiveRT, featureFDR = 0.05)
-    
+    cat( sprintf("eXp_feature: %s", eXp_feature), file = function_param_input$redirect_output , sep = "\n" ) 
     cat( sprintf("ref: %s\neXp: %s\nref_run: %s\neXp_run: %s\ndim(XICs.ref): %s\ndim(XICs.eXp): %s\nadaptiveRT: %s\neXpRT: %s\neXp_feature: %s\n", 
                  ref, eXp, 
                  function_param_input$filenames$runs[which(rownames(function_param_input$filenames) %in% ref)], function_param_input$filenames$runs[which(rownames(function_param_input$filenames) %in% eXp)], 
