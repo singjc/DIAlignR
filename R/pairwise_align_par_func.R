@@ -69,7 +69,6 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
           expr = {
             cat( sprintf("Testing maxFdrLoess: %s", maxFdrLoess_i), file = function_param_input$redirect_output , sep = "\n" )
             Loess.fit <- getGlobalAlignment(oswdata_runpair_data, ref, eXp, maxFdrLoess_i, function_param_input$spanvalue, fitType = "loess")
-            cat( sprintf("Successfully got Loess fit using maxFdrLoess: %s", maxFdrLoess_i), file = function_param_input$redirect_output , sep = "\n" ) 
           },
           error = function(e){
             cat(sprintf("ERROR: The following error occured using maxFdrLoess %s: %s", maxFdrLoess_i, e$message), file = function_param_input$redirect_output , sep = "\n")
@@ -79,9 +78,13 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
         i <- i + 1
         ##TODO Add a stop condition, otherwise loop will for on forever
       }
+      cat( sprintf("This is the Loess.fit model:"), file = function_param_input$redirect_output , sep = "\n" )
+      cat( sprintf("%s", Loess.fit), file = function_param_input$redirect_output , sep = "\n" )
       if ( is.null(Loess.fit) ) {
         cat( sprintf("Warn: Was unable to getGlobalAlignment even after permuting different maxFdrLoess thresholds...Skipping...%s", pair), file = function_param_input$redirect_output , sep = "\n" )
         return( NULL ) #TODO change this return to something more representible maybe
+      } else {
+        cat( sprintf("Successfully got Loess fit using maxFdrLoess: %s", maxFdrLoess_i), file = function_param_input$redirect_output , sep = "\n" ) 
       }
       loessFits[[pair]] <- Loess.fit
       cat( sprintf("Saving Loess Fit Pair for: %s", pair), file = function_param_input$redirect_output , sep = "\n" )
