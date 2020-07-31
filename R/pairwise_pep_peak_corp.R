@@ -115,14 +115,23 @@ getAlignObj <- function(XICs.ref, XICs.eXp, Loess.fit, adaptiveRT, samplingTime,
 getMappedRT <- function(refRT, XICs.ref, XICs.eXp, Loess.fit, alignType, adaptiveRT, samplingTime,
                         normalization, simMeasure, goFactor, geFactor, cosAngleThresh,
                         OverlapAlignment, dotProdThresh, gapQuantile, hardConstrain,
-                        samples4gradient, objType = "light"){
+                        samples4gradient, objType = "light", function_param_input=NULL ){
+  if ( !is.null(function_param_input) ){
+    cat( sprintf("[getMappedRT] Getting Align Obj"), file = function_param_input$redirect_output , sep = "\n" )
+  }
   AlignObj <- getAlignObj(XICs.ref, XICs.eXp, Loess.fit, adaptiveRT, samplingTime,
                           normalization, simType = simMeasure, goFactor, geFactor,
                           cosAngleThresh, OverlapAlignment,
                           dotProdThresh, gapQuantile, hardConstrain, samples4gradient, objType)
+  if ( !is.null(function_param_input) ){
+    cat( sprintf("[getMappedRT]Successfully Extracted Align Obj"), file = function_param_input$redirect_output , sep = "\n" )
+  }
   tVec.ref <- XICs.ref[[1]][["time"]] # Extracting time component
   tVec.eXp <- XICs.eXp[[1]][["time"]] # Extracting time component
   eXpRT <- mappedRTfromAlignObj(refRT, tVec.ref, tVec.eXp, AlignObj)
+  if ( !is.null(function_param_input) ){
+    cat( sprintf("tVec.ref: %s\ntVec.eXp: %s\neXpRT: %s\n"), file = function_param_input$redirect_output , sep = "\n" )
+  }
   eXpRT
 }
 

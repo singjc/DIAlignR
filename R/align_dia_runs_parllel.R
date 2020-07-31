@@ -130,6 +130,9 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     ref <- "run12"
     eXp <- "run11"
     runs <- c("chludwig_K150309_013_SW_0", "chludwig_K150309_012_SW_1_1")
+    analyte <- "DY(Phospho)IM(Oxidation)SPVGNPEGPEK(Label:13C(6)15N(2))PNKK_3"
+    ref <- "run7"
+    eXp <- "run2"
   }
   
   
