@@ -79,7 +79,13 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
         ##TODO Add a stop condition, otherwise loop will for on forever
       }
       cat( sprintf("This is the Loess.fit model:"), file = function_param_input$redirect_output , sep = "\n" )
-      cat( sprintf("%s", pair), file = function_param_input$redirect_output , sep = "\n" )
+      tryCatch( expr = {
+        cat( sprintf("%s", pair), file = function_param_input$redirect_output , sep = "\n" )
+      },
+      error = function(e) {
+        cat( sprintf("[pairwise_align_par_func] There was an issue with the print statement." ), file = function_param_input$redirect_output , sep = "\n" )
+      })
+      
       if ( is.null(Loess.fit) ) {
         cat( sprintf("Warn: Was unable to getGlobalAlignment even after permuting different maxFdrLoess thresholds...Skipping...%s", pair), file = function_param_input$redirect_output , sep = "\n" )
         return( NULL ) #TODO change this return to something more representible maybe
@@ -97,11 +103,24 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
                          normalization = function_param_input$normalization, simMeasure = function_param_input$simMeasure, goFactor = function_param_input$goFactor, geFactor = function_param_input$geFactor, cosAngleThresh = function_param_input$cosAngleThresh, 
                          OverlapAlignment = function_param_input$OverlapAlignment, dotProdThresh = function_param_input$dotProdThresh, gapQuantile = function_param_input$gapQuantile, hardConstrain = function_param_input$hardConstrain,
                          samples4gradient = function_param_input$samples4gradient, objType = "light", function_param_input=function_param_input )
-    cat( sprintf("eXpRT: %s", eXpRT), file = function_param_input$redirect_output , sep = "\n" ) 
+    
+    tryCatch( expr = {
+      cat( sprintf("eXpRT: %s", eXpRT), file = function_param_input$redirect_output , sep = "\n" ) 
+    },
+    error = function(e) {
+      cat( sprintf("[pairwise_align_par_func] There was an issue with the print statement." ), file = function_param_input$redirect_output , sep = "\n" )
+    })
+    
     cat( sprintf("Picking Nearest Feature"), file = function_param_input$redirect_output , sep = "\n" )
     eXp_feature <- pickNearestFeature(eXpRT, analyte, oswdata_runpair_data, runname = eXp,
                                       adaptiveRT = adaptiveRT, featureFDR = 0.05)
-    cat( sprintf("eXp_feature: %s", eXp_feature), file = function_param_input$redirect_output , sep = "\n" ) 
+     
+    tryCatch( expr = {
+      cat( sprintf("eXp_feature: %s", eXp_feature), file = function_param_input$redirect_output , sep = "\n" )
+    },
+    error = function(e) {
+      cat( sprintf("[pairwise_align_par_func] There was an issue with the print statement." ), file = function_param_input$redirect_output , sep = "\n" )
+    })
     cat( sprintf("ref: %s\neXp: %s\nref_run: %s\neXp_run: %s\ndim(XICs.ref): %s\ndim(XICs.eXp): %s\nadaptiveRT: %s\neXpRT: %s\neXp_feature: %s\n", 
                  ref, eXp, 
                  function_param_input$filenames$runs[which(rownames(function_param_input$filenames) %in% ref)], function_param_input$filenames$runs[which(rownames(function_param_input$filenames) %in% eXp)], 
