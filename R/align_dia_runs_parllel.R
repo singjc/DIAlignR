@@ -100,7 +100,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     keep_all_detecting=T
     i=4;
     # n_workers=parallel::detectCores() - 16
-    n_workers=4
+    n_workers=1
     analyteFDR = 1
     cached_mzPntrsdb="cached_chromatogram_data.mzPntrs"
     analyte<- "ANS(Phospho)SPTTNIDHLK(Label:13C(6)15N(2))_2"
@@ -126,9 +126,10 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
     ref <- "run13"
     eXp <- "run5"
     cached_mzPntrsdb<-"/media/justincsing/ExtraDrive1/Documents2/Roest_Lab/Github/PTMs_Project/Synth_PhosoPep/Justin_Synth_PhosPep/results/George_lib_repeat2/DIAlignR_Analysis/data/sqmass/cached_chromatogram_data.mzPntrs"
-    analytes <- "DDADPTS(Phospho)SNGGNSSIIK(Label:13C(6)15N(2))_2"
+    analyte <- "DDADPTS(Phospho)SNGGNSSIIK(Label:13C(6)15N(2))_2"
     ref <- "run12"
     eXp <- "run11"
+    runs <- c("chludwig_K150309_013_SW_0", "chludwig_K150309_012_SW_1_1")
   }
   
   
@@ -157,7 +158,7 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   }
   
   # Get filenames from .merged.osw file and check if names are consistent between osw and mzML files.
-  filenames <- DIAlignR:::getRunNames(dataPath, oswMerged, nameCutPattern, chrom_ext=chrom_ext)
+  filenames <- getRunNames(dataPath, oswMerged, nameCutPattern, chrom_ext=chrom_ext)
   if(!is.null(runs)){
     filenames <- filenames[filenames$runs %in% runs,]
     missingRun <- setdiff(runs, filenames$runs)

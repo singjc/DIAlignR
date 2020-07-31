@@ -67,7 +67,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
         maxFdrLoess_i <- maxFdrLoess_list[i]
         Loess.fit <- tryCatch(
           expr = {
-            message( sprintf("Used maxFdrLoess: %s", maxFdrLoess_i))
+            cat( sprintf("Used maxFdrLoess: %s", maxFdrLoess_i), file = function_param_input$redirect_output , sep = "\n" )
             Loess.fit <- getGlobalAlignment(oswdata_runpair_data, ref, eXp, maxFdrLoess_i, function_param_input$spanvalue, fitType = "loess")
             
           },
@@ -89,7 +89,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
     adaptiveRT <- function_param_input$RSEdistFactor*Loess.fit$s
     
     # Get retention time in experiment run mapped to reference run retention time.
-    eXpRT <- getMappedRT(refRT = function_param_input$refPeak$RT, XICs.ref = XICs.ref, XICs.eXp = XICs.eXp, Loess.fit = Loess.fit, alignType = function_param_input$alignType, adaptiveRT = adaptiveRT, function_param_input$samplingTime,
+    eXpRT <- DIAlignR:::getMappedRT(refRT = function_param_input$refPeak$RT, XICs.ref = XICs.ref, XICs.eXp = XICs.eXp, Loess.fit = Loess.fit, alignType = function_param_input$alignType, adaptiveRT = adaptiveRT, function_param_input$samplingTime,
                          function_param_input$normalization, function_param_input$simMeasure, function_param_input$goFactor, function_param_input$geFactor, function_param_input$cosAngleThresh,
                          function_param_input$OverlapAlignment, function_param_input$dotProdThresh, function_param_input$gapQuantile, function_param_input$hardConstrain,
                          function_param_input$samples4gradient)
