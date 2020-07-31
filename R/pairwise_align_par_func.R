@@ -67,9 +67,9 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
         maxFdrLoess_i <- maxFdrLoess_list[i]
         Loess.fit <- tryCatch(
           expr = {
-            cat( sprintf("Used maxFdrLoess: %s", maxFdrLoess_i), file = function_param_input$redirect_output , sep = "\n" )
+            cat( sprintf("Testing maxFdrLoess: %s", maxFdrLoess_i), file = function_param_input$redirect_output , sep = "\n" )
             Loess.fit <- getGlobalAlignment(oswdata_runpair_data, ref, eXp, maxFdrLoess_i, function_param_input$spanvalue, fitType = "loess")
-            
+            cat( sprintf("Successfully got Loess fit using maxFdrLoess: %s", maxFdrLoess_i), file = function_param_input$redirect_output , sep = "\n" ) 
           },
           error = function(e){
             cat(sprintf("ERROR: The following error occured using maxFdrLoess %s: %s", maxFdrLoess_i, e$message), file = function_param_input$redirect_output , sep = "\n")
@@ -84,15 +84,17 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
         return( NULL ) #TODO change this return to something more representible maybe
       }
       loessFits[[pair]] <- Loess.fit
+      cat( sprintf("Saving Loess Fit Pair for: %s", pair), file = function_param_input$redirect_output , sep = "\n" )
     }
     # Set up constraints for penalizing similarity matrix
     adaptiveRT <- function_param_input$RSEdistFactor*Loess.fit$s
-    
+    cat( sprintf("Getting retention time in experiment run mapped to ref run RT"), file = function_param_input$redirect_output , sep = "\n" )
     # Get retention time in experiment run mapped to reference run retention time.
     eXpRT <- DIAlignR:::getMappedRT(refRT = function_param_input$refPeak$RT, XICs.ref = XICs.ref, XICs.eXp = XICs.eXp, Loess.fit = Loess.fit, alignType = function_param_input$alignType, adaptiveRT = adaptiveRT, function_param_input$samplingTime,
                          function_param_input$normalization, function_param_input$simMeasure, function_param_input$goFactor, function_param_input$geFactor, function_param_input$cosAngleThresh,
                          function_param_input$OverlapAlignment, function_param_input$dotProdThresh, function_param_input$gapQuantile, function_param_input$hardConstrain,
                          function_param_input$samples4gradient)
+    cat( sprintf("Picking Nearest Feature"), file = function_param_input$redirect_output , sep = "\n" )
     eXp_feature <- pickNearestFeature(eXpRT, analyte, oswdata_runpair_data, runname = eXp,
                                       adaptiveRT = adaptiveRT, featureFDR = 0.05)
     
