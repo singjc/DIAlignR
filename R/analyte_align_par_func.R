@@ -129,7 +129,7 @@ analyte_align_par_func <- function( oswdata, function_param_input ){
   tmp_catch <- tryCatch( expr = {
     cat( names(oswdata_runpairs), "\n", file=redirect_output, append = T )
     oswdata_runpairs %>%
-      dplyr::mutate( runpair_alignment = purrr::pmap( list(data, XICs.ref, function_param_input), ( ~DIAlignR:::pairwise_align_par_func(oswdata_runpair_data = data, XICs.ref = XICs.ref, function_param_input = function_param_input ) ) ) ) -> tmp
+      dplyr::mutate( runpair_alignment = purrr::pmap( list(data, XICs.ref, function_param_input), ( ~pairwise_align_par_func(oswdata_runpair_data = data, XICs.ref = XICs.ref, function_param_input = function_param_input ) ) ) ) -> tmp
     cat(sprintf("INFO: Vectorized pairwise alignment was successful!!\n"), file = redirect_output, sep = "\n")
     tmp_catch <- list(data=tmp, alignment_status="Success") 
   },
