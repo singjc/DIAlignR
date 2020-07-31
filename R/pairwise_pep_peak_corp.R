@@ -130,7 +130,7 @@ getMappedRT <- function(refRT, XICs.ref, XICs.eXp, Loess.fit, alignType, adaptiv
   tVec.eXp <- XICs.eXp[[1]][["time"]] # Extracting time component
   eXpRT <- mappedRTfromAlignObj(refRT, tVec.ref, tVec.eXp, AlignObj)
   if ( !is.null(function_param_input) ){
-    cat( sprintf("tVec.ref: %s\ntVec.eXp: %s\neXpRT: %s\n"), file = function_param_input$redirect_output , sep = "\n" )
+    cat( sprintf("tVec.ref: %s\ntVec.eXp: %s\neXpRT: %s\n", tVec.ref, tVec.eXp, eXpRT ), file = function_param_input$redirect_output , sep = "\n" )
   }
   eXpRT
 }
