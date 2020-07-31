@@ -61,7 +61,7 @@ analyte_align_par_func <- function( oswdata, function_param_input ){
   cat(sprintf("Reference Peak at %s with boundaries (%s, %s) and intensity of %s", refPeak$RT, refPeak$leftWidth, refPeak$rightWidth, refPeak$Intensity), file = redirect_output, sep = "\n")
   
   # Get XIC_group from reference run. if missing, go to next analyte.
-  ref <- names(function_param_input$runs)[ grepl(ref_run_id, names(function_param_input$runs)) ]
+  ref <- names(function_param_input$runs)[ grepl(paste("^", ref_run_id, "$", sep=""), names(function_param_input$runs)) ]
   exps <- setdiff(names(function_param_input$runs), ref)
   chromIndices <- selectChromIndices(oswdata, runname = ref, analyte = analyte, return_index=function_param_input$return_index )
   
