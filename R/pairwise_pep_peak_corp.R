@@ -62,6 +62,10 @@ getAlignObj <- function(XICs.ref, XICs.eXp, Loess.fit, adaptiveRT, samplingTime,
   # Perform dynamic programming for chromatogram alignment
   intensityList.ref <- lapply(XICs.ref, `[[`, 2) # Extracting intensity values
   intensityList.eXp <- lapply(XICs.eXp, `[[`, 2) # Extracting intensity values
+  if ( !is.null(function_param_input) ){
+    cat( sprintf("[getMappedRT -> getAlignObj] noBeef: %s\ntVec.ref: %s\ntVec.eXp: %s\nB1p: %s\nB2p: %s\nint.ref: %s\nint.eXp: %s\n",
+                 noBeef, tVec.ref, tVec.eXp, B1p, B2p, intensityList.ref, intensityList.eXp ), file = function_param_input$redirect_output , sep = "\n" )
+  }
   AlignObj <- alignChromatogramsCpp(intensityList.ref, intensityList.eXp,
                                     alignType = "hybrid", tVec.ref, tVec.eXp,
                                     normalization = normalization, simType = simType,
