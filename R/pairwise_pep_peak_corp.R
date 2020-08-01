@@ -46,13 +46,19 @@ getAlignObj <- function(XICs.ref, XICs.eXp, Loess.fit, adaptiveRT, samplingTime,
                         normalization, simType, goFactor, geFactor,
                         cosAngleThresh, OverlapAlignment,
                         dotProdThresh, gapQuantile, hardConstrain,
-                        samples4gradient, objType = "light"){
+                        samples4gradient, objType = "light", function_param_input=NULL){
+  if ( !is.null(function_param_input) ){
+    cat( sprintf("[getMappedRT -> getAlignObj] Getting noBeef."), file = function_param_input$redirect_output , sep = "\n" )
+  }
   # Set up constraints for penalizing similarity matrix
   noBeef <- ceiling(adaptiveRT/samplingTime)
   tVec.ref <- XICs.ref[[1]][["time"]] # Extracting time component
   tVec.eXp <- XICs.eXp[[1]][["time"]] # Extracting time component
   B1p <- stats::predict(Loess.fit, tVec.ref[1])
   B2p <- stats::predict(Loess.fit, tVec.ref[length(tVec.ref)])
+  if ( !is.null(function_param_input) ){
+    cat( sprintf("[getMappedRT -> getAlignObj] Perform dynamic programming for chromatogram alignment"), file = function_param_input$redirect_output , sep = "\n" )
+  }
   # Perform dynamic programming for chromatogram alignment
   intensityList.ref <- lapply(XICs.ref, `[[`, 2) # Extracting intensity values
   intensityList.eXp <- lapply(XICs.eXp, `[[`, 2) # Extracting intensity values
@@ -65,6 +71,9 @@ getAlignObj <- function(XICs.ref, XICs.eXp, Loess.fit, adaptiveRT, samplingTime,
                                     dotProdThresh = dotProdThresh, gapQuantile = gapQuantile,
                                     hardConstrain = hardConstrain, samples4gradient = samples4gradient,
                                     objType = objType)
+  if ( !is.null(function_param_input) ){
+    cat( sprintf("[getMappedRT -> getAlignObj] Finished Performing dynamic programming for chromatogram alignment"), file = function_param_input$redirect_output , sep = "\n" )
+  }
   AlignObj
 }
 
@@ -128,14 +137,14 @@ getMappedRT <- function(refRT, XICs.ref, XICs.eXp, Loess.fit, alignType, adaptiv
     AlignObj <- getAlignObj(XICs.ref, XICs.eXp, Loess.fit, adaptiveRT, samplingTime,
                             normalization, simType = simMeasure, goFactor, geFactor,
                             cosAngleThresh, OverlapAlignment,
-                            dotProdThresh, gapQuantile, hardConstrain, samples4gradient, objType)
+                            dotProdThresh, gapQuantile, hardConstrain, samples4gradient, objType, function_param_input=function_param_input)
   },
   error = function(e){
     if ( !is.null(function_param_input) ){
-
-        cat( sprintf("[getMappedRT] Was unabled to get aligned obj:\n%s\nReturning NULL for eXpRT..", e$message), file = function_param_input$redirect_output , sep = "\n" )
-        return(NULL)
-}
+      
+      cat( sprintf("[getMappedRT] Was unabled to get aligned obj:\n%s\nReturning NULL for eXpRT..", e$message), file = function_param_input$redirect_output , sep = "\n" )
+      return(NULL)
+    }
   })
   
   if ( !is.null(function_param_input) ){
@@ -149,7 +158,7 @@ getMappedRT <- function(refRT, XICs.ref, XICs.eXp, Loess.fit, alignType, adaptiv
   tVec.ref <- XICs.ref[[1]][["time"]] # Extracting time component
   tVec.eXp <- XICs.eXp[[1]][["time"]] # Extracting time component
   eXpRT <- mappedRTfromAlignObj(refRT, tVec.ref, tVec.eXp, AlignObj)
-
+  
   eXpRT
 }
 
