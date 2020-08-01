@@ -111,6 +111,11 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
       cat( sprintf("[pairwise_align_par_func] There was an issue with the print statement." ), file = function_param_input$redirect_output , sep = "\n" )
     })
     
+    
+    if ( is.null(eXpRT) ){
+      cat( sprintf("[pairwise_align_par_func] eXpRT was null....." ), file = function_param_input$redirect_output , sep = "\n" )
+      return( NULL )
+    }
     cat( sprintf("Picking Nearest Feature"), file = function_param_input$redirect_output , sep = "\n" )
     eXp_feature <- pickNearestFeature(eXpRT, analyte, oswdata_runpair_data, runname = eXp,
                                       adaptiveRT = adaptiveRT, featureFDR = 0.05)
