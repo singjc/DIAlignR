@@ -124,10 +124,20 @@ getMappedRT <- function(refRT, XICs.ref, XICs.eXp, Loess.fit, alignType, adaptiv
       cat( sprintf("[getMappedRT] There was an issue with the print statement." ), file = function_param_input$redirect_output , sep = "\n" )
     })
   }
-  AlignObj <- getAlignObj(XICs.ref, XICs.eXp, Loess.fit, adaptiveRT, samplingTime,
-                          normalization, simType = simMeasure, goFactor, geFactor,
-                          cosAngleThresh, OverlapAlignment,
-                          dotProdThresh, gapQuantile, hardConstrain, samples4gradient, objType)
+  tryCatch( expr = {
+    AlignObj <- getAlignObj(XICs.ref, XICs.eXp, Loess.fit, adaptiveRT, samplingTime,
+                            normalization, simType = simMeasure, goFactor, geFactor,
+                            cosAngleThresh, OverlapAlignment,
+                            dotProdThresh, gapQuantile, hardConstrain, samples4gradient, objType)
+  },
+  error = function(e){
+    if ( !is.null(function_param_input) ){
+
+        cat( sprintf("[getMappedRT] Was unabled to get aligned obj:\n%s\nReturning NULL for eXpRT..", e$message), file = function_param_input$redirect_output , sep = "\n" )
+        return(NULL)
+}
+  })
+  
   if ( !is.null(function_param_input) ){
     tryCatch( expr = {
       cat( sprintf("[getMappedRT] Successfully Extracted Align Obj"), file = function_param_input$redirect_output , sep = "\n" )
@@ -139,15 +149,7 @@ getMappedRT <- function(refRT, XICs.ref, XICs.eXp, Loess.fit, alignType, adaptiv
   tVec.ref <- XICs.ref[[1]][["time"]] # Extracting time component
   tVec.eXp <- XICs.eXp[[1]][["time"]] # Extracting time component
   eXpRT <- mappedRTfromAlignObj(refRT, tVec.ref, tVec.eXp, AlignObj)
-  if ( !is.null(function_param_input) ){
-    tryCatch( expr = {
-      cat( sprintf("[getMappedRT] tVec.ref: %s\ntVec.eXp: %s\neXpRT: %s\n", tVec.ref, tVec.eXp, eXpRT ), file = function_param_input$redirect_output , sep = "\n" )
-    },
-    error = function(e) {
-      cat( sprintf("[getMappedRT] There was an issue with the print statement." ), file = function_param_input$redirect_output , sep = "\n" )
-    })
-    
-  }
+
   eXpRT
 }
 
