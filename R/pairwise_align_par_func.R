@@ -98,6 +98,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
     # Set up constraints for penalizing similarity matrix
     adaptiveRT <- function_param_input$RSEdistFactor*Loess.fit$s
     cat( sprintf("Getting retention time in experiment run mapped to ref run RT"), file = function_param_input$redirect_output , sep = "\n" )
+    if (is.null(XICs.ref)) cat("XICs.ref is NULL", sep="\n", file=function_param_input$redirect_output)
     cat( sprintf("adaptiveRT: %s", adaptiveRT), file = function_param_input$redirect_output , sep = "\n" )
     cat( sprintf("XICs.ref:"), file = function_param_input$redirect_output , sep = "\n" )
     apply(XICs.ref, 1, function(x){cat(head(x), sep = '\t', file = function_param_input$redirect_output); cat("\n", file=function_param_input$redirect_output)})
