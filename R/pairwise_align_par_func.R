@@ -49,6 +49,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
   if(!is.null(chromIndices)){
     tictoc::tic()
     mzPntrs <- getmzPntrs_on_the_fly( db = function_param_input$cached_mzPntrsdb, runs = eXp, chromIndices = chromIndices )
+    cat( sprintf("mzPntrs: %s", mzPntrs), file = function_param_input$redirect_output , sep = "\n" )
     XICs.eXp <- extractXIC_group(mzPntrs[[eXp]]$mz, chromIndices)
     ## End timer
     exec_time <- tictoc::toc(quiet = T)
@@ -63,22 +64,22 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
       maxFdrLoess_list <- seq(function_param_input$maxFdrLoess, 1, 0.05)
       i <- 1
       Loess.fit <- NULL
+      cat( sprintf("Testing maxFdrLoess: %s", maxFdrLoess_i), file = function_param_input$redirect_output , sep = "..." )
       while ( is.null(Loess.fit) & i<length(maxFdrLoess_list) ) {
         maxFdrLoess_i <- maxFdrLoess_list[i]
         Loess.fit <- tryCatch(
           expr = {
-            cat( sprintf("Testing maxFdrLoess: %s", maxFdrLoess_i), file = function_param_input$redirect_output , sep = "\n" )
+            cat( sprintf("%s", maxFdrLoess_i), file = function_param_input$redirect_output , sep = "..." )
             Loess.fit <- getGlobalAlignment(oswdata_runpair_data, ref, eXp, maxFdrLoess_i, function_param_input$spanvalue, fitType = "loess")
           },
           error = function(e){
-            cat(sprintf("ERROR: The following error occured using maxFdrLoess %s: %s", maxFdrLoess_i, e$message), file = function_param_input$redirect_output , sep = "\n")
+            # cat(sprintf("ERROR: The following error occured using maxFdrLoess %s: %s", maxFdrLoess_i, e$message), file = function_param_input$redirect_output , sep = "\n")
             Loess.fit <- NULL
           }
         )
         i <- i + 1
         ##TODO Add a stop condition, otherwise loop will for on forever
       }
-      cat( sprintf("This is the Loess.fit model:"), file = function_param_input$redirect_output , sep = "\n" )
       tryCatch( expr = {
         cat( sprintf("%s", pair), file = function_param_input$redirect_output , sep = "\n" )
       },
