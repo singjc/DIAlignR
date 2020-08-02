@@ -32,5 +32,6 @@ getmzPntrs_on_the_fly <- function( db, runs, chromIndices=NULL ){
   })
   names(mzPntrs) <- runs
   tictoc::toc()
+  DBI::dbDisconnect( conn = con )
   return( mzPntrs )
 }

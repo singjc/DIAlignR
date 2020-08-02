@@ -71,15 +71,25 @@ getAlignObj <- function(XICs.ref, XICs.eXp, Loess.fit, adaptiveRT, samplingTime,
     cat( sprintf("[getMappedRT -> getAlignObj] len int.ref: %s", length(intensityList.ref) ), file = function_param_input$redirect_output , sep = "\n" )
     cat( sprintf("[getMappedRT -> getAlignObj] len int.eXp: %s", length(intensityList.eXp) ), file = function_param_input$redirect_output , sep = "\n" )
   }
-  AlignObj <- alignChromatogramsCpp(intensityList.ref, intensityList.eXp,
-                                    alignType = "hybrid", tVec.ref, tVec.eXp,
-                                    normalization = normalization, simType = simType,
-                                    B1p = B1p, B2p = B2p, noBeef = noBeef,
-                                    goFactor = goFactor, geFactor = geFactor,
-                                    cosAngleThresh = cosAngleThresh, OverlapAlignment = OverlapAlignment,
-                                    dotProdThresh = dotProdThresh, gapQuantile = gapQuantile,
-                                    hardConstrain = hardConstrain, samples4gradient = samples4gradient,
-                                    objType = objType)
+  AlignObj <- tryCatch( expr = {
+    AlignObj <- DIAlignR:::alignChromatogramsCpp(intensityList.ref, intensityList.eXp,
+                                                 alignType = "hybrid", tVec.ref, tVec.eXp,
+                                                 normalization = normalization, simType = simType,
+                                                 B1p = B1p, B2p = B2p, noBeef = noBeef,
+                                                 goFactor = goFactor, geFactor = geFactor,
+                                                 cosAngleThresh = cosAngleThresh, OverlapAlignment = OverlapAlignment,
+                                                 dotProdThresh = dotProdThresh, gapQuantile = gapQuantile,
+                                                 hardConstrain = hardConstrain, samples4gradient = samples4gradient,
+                                                 objType = objType)
+  },
+  error = function(e){
+    if ( !is.null(function_param_input) ){
+      cat( sprintf("[getMappedRT -> getAlignObj] There was the following error when getting alignChromatogramsCpp:\n%s", e$message), file = function_param_input$redirect_output , sep = "\n" )
+      AlignObj <- NULL
+      return(AlignObj)
+    }
+  })
+ 
   if ( !is.null(function_param_input) ){
     cat( sprintf("[getMappedRT -> getAlignObj] Finished Performing dynamic programming for chromatogram alignment"), file = function_param_input$redirect_output , sep = "\n" )
   }
