@@ -62,17 +62,36 @@ getAlignObj <- function(XICs.ref, XICs.eXp, Loess.fit, adaptiveRT, samplingTime,
   # Perform dynamic programming for chromatogram alignment
   intensityList.ref <- lapply(XICs.ref, `[[`, 2) # Extracting intensity values
   intensityList.eXp <- lapply(XICs.eXp, `[[`, 2) # Extracting intensity values
+  if ( length(intensityList.ref[[1]])!=length(intensityList.eXp) ){
+    if ( !is.null(function_param_input) ){
+      cat( sprintf("[getMappedRT -> getAlignObj] WARN: Adding padding to first intensity vector"), file = function_param_input$redirect_output , sep = "" )
+    }
+    if ( length(intensityList.ref[[1]]) > length(intensityList.eXp) ){
+      if ( !is.null(function_param_input) ){
+        cat( sprintf("Adding to first intensity vector of intensityList.eXp"), file = function_param_input$redirect_output , sep = "\n" )
+      }
+      tVec.eXp <- append( c(tVec.eXp[[1]]-3.4), tVec.eXp )
+      intensityList.eXp[[1]] <- append( c(0), intensityList.eXp[[1]] )
+    } else{
+      if ( !is.null(function_param_input) ){
+        cat( sprintf("Adding to first intensity vector of intensityList.ref"), file = function_param_input$redirect_output , sep = "\n" )
+      }
+      tVec.ref <- append( c(tVec.ref[[1]]-3.4), tVec.ref )
+      intensityList.ref[[1]] <- append( c(0), intensityList.ref[[1]] )
+    }
+    
+  }
   if ( !is.null(function_param_input) ){
     cat( sprintf("[getMappedRT -> getAlignObj] noBeef: %s", noBeef), file = function_param_input$redirect_output , sep = "\n" )
     cat( sprintf("[getMappedRT -> getAlignObj] len tVec.ref: %s", length(tVec.ref) ), file = function_param_input$redirect_output , sep = "\n" )
     cat( sprintf("[getMappedRT -> getAlignObj] len tVec.eXp: %s", length(tVec.eXp) ), file = function_param_input$redirect_output , sep = "\n" )
     cat( sprintf("[getMappedRT -> getAlignObj] B1p: %s", B1p ), file = function_param_input$redirect_output , sep = "\n" )
     cat( sprintf("[getMappedRT -> getAlignObj] B2p: %s", B2p ), file = function_param_input$redirect_output , sep = "\n" )
-    cat( sprintf("[getMappedRT -> getAlignObj] len int.ref: %s", length(intensityList.ref) ), file = function_param_input$redirect_output , sep = "\n" )
-    cat( sprintf("[getMappedRT -> getAlignObj] len int.eXp: %s", length(intensityList.eXp) ), file = function_param_input$redirect_output , sep = "\n" )
+    cat( sprintf("[getMappedRT -> getAlignObj] len int.ref: %s", paste(unlist(lapply(intensityList.ref, function(x) length(x))), collapse=", ") ), file = function_param_input$redirect_output , sep = "\n" )
+    cat( sprintf("[getMappedRT -> getAlignObj] len int.eXp: %s", paste(unlist(lapply(intensityList.eXp, function(x) length(x))), collapse=", ") ), file = function_param_input$redirect_output , sep = "\n" )
   }
   AlignObj <- tryCatch( expr = {
-    AlignObj <- DIAlignR:::alignChromatogramsCpp(intensityList.ref, intensityList.eXp,
+    AlignObj <- DIAlignR::alignChromatogramsCpp(intensityList.ref, intensityList.eXp,
                                                  alignType = "hybrid", tVec.ref, tVec.eXp,
                                                  normalization = normalization, simType = simType,
                                                  B1p = B1p, B2p = B2p, noBeef = noBeef,
@@ -85,9 +104,9 @@ getAlignObj <- function(XICs.ref, XICs.eXp, Loess.fit, adaptiveRT, samplingTime,
   error = function(e){
     if ( !is.null(function_param_input) ){
       cat( sprintf("[getMappedRT -> getAlignObj] There was the following error when getting alignChromatogramsCpp:\n%s", e$message), file = function_param_input$redirect_output , sep = "\n" )
-      AlignObj <- NULL
-      return(AlignObj)
     }
+    AlignObj <- NULL
+    return(AlignObj)
   })
  
   if ( !is.null(function_param_input) ){
@@ -153,7 +172,7 @@ getMappedRT <- function(refRT, XICs.ref, XICs.eXp, Loess.fit, alignType, adaptiv
     })
   }
   tryCatch( expr = {
-    AlignObj <- getAlignObj(XICs.ref, XICs.eXp, Loess.fit, adaptiveRT, samplingTime,
+    AlignObj <- DIAlignR::getAlignObj(XICs.ref, XICs.eXp, Loess.fit, adaptiveRT, samplingTime,
                             normalization, simType = simMeasure, goFactor, geFactor,
                             cosAngleThresh, OverlapAlignment,
                             dotProdThresh, gapQuantile, hardConstrain, samples4gradient, objType, function_param_input=function_param_input)
