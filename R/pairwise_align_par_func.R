@@ -50,7 +50,6 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
     tictoc::tic()
     mzPntrs <- getmzPntrs_on_the_fly( db = function_param_input$cached_mzPntrsdb, runs = eXp, chromIndices = chromIndices )
     XICs.eXp <- extractXIC_group(mzPntrs[[eXp]]$mz, chromIndices)
-    cat( sprintf("XICs.ref: %s", XICs.ref), file = function_param_input$redirect_output , sep = "\n" )
     ## End timer
     exec_time <- tictoc::toc(quiet = T)
     cat(sprintf("Extracting XIC with %s traces for eXp run %s: Elapsed Time = %s sec", length(chromIndices), eXp, round(exec_time$toc - exec_time$tic, 3) ), file = function_param_input$redirect_output , sep = "\n")
@@ -64,12 +63,12 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
       maxFdrLoess_list <- seq(function_param_input$maxFdrLoess, 1, 0.05)
       i <- 1
       Loess.fit <- NULL
-      cat( sprintf("Testing maxFdrLoess: %s", maxFdrLoess_list[i]), file = function_param_input$redirect_output , sep = "\t" )
+      cat( sprintf("Testing maxFdrLoess: "), file = function_param_input$redirect_output , sep = " " )
       while ( is.null(Loess.fit) & i<length(maxFdrLoess_list) ) {
         maxFdrLoess_i <- maxFdrLoess_list[i]
         Loess.fit <- tryCatch(
           expr = {
-            cat( sprintf("%s", maxFdrLoess_i), file = function_param_input$redirect_output , sep = "\t" )
+            cat( sprintf("...%s...", maxFdrLoess_i), file = function_param_input$redirect_output , sep = " " )
             Loess.fit <- getGlobalAlignment(oswdata_runpair_data, ref, eXp, maxFdrLoess_i, function_param_input$spanvalue, fitType = "loess")
           },
           error = function(e){
@@ -95,7 +94,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
     adaptiveRT <- function_param_input$RSEdistFactor*Loess.fit$s
     cat( sprintf("Getting retention time in experiment run mapped to ref run RT"), file = function_param_input$redirect_output , sep = "\n" )
     cat( sprintf("I am HERE..."), file = function_param_input$redirect_output, sep="\n" )
-    cat( sprintf("names XICs.ref: %s", names(XICs.ref)), sep="\n", file=function_param_input$redirect_output)
+    cat( sprintf("length XICs.ref: %s", length(XICs.ref)), sep="\n", file=function_param_input$redirect_output)
     cat( sprintf("adaptiveRT: %s", adaptiveRT), file = function_param_input$redirect_output , sep = "\n" )
     cat( sprintf("XICs.ref:"), file = function_param_input$redirect_output , sep = "\n" )
     apply(XICs.ref[[1]], 1, function(x){cat(head(x), sep = '\t', file = function_param_input$redirect_output); cat("\n", file=function_param_input$redirect_output)})
