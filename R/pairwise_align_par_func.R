@@ -49,8 +49,8 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
   if(!is.null(chromIndices)){
     tictoc::tic()
     mzPntrs <- getmzPntrs_on_the_fly( db = function_param_input$cached_mzPntrsdb, runs = eXp, chromIndices = chromIndices )
-    cat( sprintf("mzPntrs: %s", mzPntrs), file = function_param_input$redirect_output , sep = "\n" )
     XICs.eXp <- extractXIC_group(mzPntrs[[eXp]]$mz, chromIndices)
+    cat( sprintf("XICs.eXp: %s", XICs.eXp), file = function_param_input$redirect_output , sep = "\n" )
     ## End timer
     exec_time <- tictoc::toc(quiet = T)
     cat(sprintf("Extracting XIC with %s traces for eXp run %s: Elapsed Time = %s sec", length(chromIndices), eXp, round(exec_time$toc - exec_time$tic, 3) ), file = function_param_input$redirect_output , sep = "\n")
@@ -64,7 +64,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
       maxFdrLoess_list <- seq(function_param_input$maxFdrLoess, 1, 0.05)
       i <- 1
       Loess.fit <- NULL
-      cat( sprintf("Testing maxFdrLoess: %s", maxFdrLoess_i), file = function_param_input$redirect_output , sep = "..." )
+      cat( sprintf("Testing maxFdrLoess: %s", maxFdrLoess_list[i]), file = function_param_input$redirect_output , sep = "..." )
       while ( is.null(Loess.fit) & i<length(maxFdrLoess_list) ) {
         maxFdrLoess_i <- maxFdrLoess_list[i]
         Loess.fit <- tryCatch(
