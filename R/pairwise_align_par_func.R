@@ -68,7 +68,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
         maxFdrLoess_i <- maxFdrLoess_list[i]
         Loess.fit <- tryCatch(
           expr = {
-            cat( sprintf("...%s...", maxFdrLoess_i), file = function_param_input$redirect_output , sep = " " )
+            cat( sprintf("%s...", maxFdrLoess_i), file = function_param_input$redirect_output , sep = " " )
             Loess.fit <- getGlobalAlignment(oswdata_runpair_data, ref, eXp, maxFdrLoess_i, function_param_input$spanvalue, fitType = "loess")
           },
           error = function(e){
@@ -96,9 +96,6 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
     cat( sprintf("I am HERE..."), file = function_param_input$redirect_output, sep="\n" )
     cat( sprintf("length XICs.ref: %s", length(XICs.ref)), sep="\n", file=function_param_input$redirect_output)
     cat( sprintf("adaptiveRT: %s", adaptiveRT), file = function_param_input$redirect_output , sep = "\n" )
-    cat( sprintf("XICs.ref:"), file = function_param_input$redirect_output , sep = "\n" )
-    apply(XICs.ref[[1]], 1, function(x){cat(head(x), sep = '\t', file = function_param_input$redirect_output); cat("\n", file=function_param_input$redirect_output)})
-
     cat( sprintf("dim(XICs.ref): %s\ndim(XICs.eXp): %s\nadaptiveRT: %s\n", paste(unlist(lapply(XICs.ref, function(x) length(x[[1]]))), collapse=", "), paste(unlist(lapply(XICs.eXp, function(x) length(x[[1]]))), collapse=", ")), file = function_param_input$redirect_output , sep = "\n"   )
 
     # Get retention time in experiment run mapped to reference run retention time.
