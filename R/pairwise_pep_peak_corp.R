@@ -63,8 +63,13 @@ getAlignObj <- function(XICs.ref, XICs.eXp, Loess.fit, adaptiveRT, samplingTime,
   intensityList.ref <- lapply(XICs.ref, `[[`, 2) # Extracting intensity values
   intensityList.eXp <- lapply(XICs.eXp, `[[`, 2) # Extracting intensity values
   if ( !is.null(function_param_input) ){
-    cat( sprintf("[getMappedRT -> getAlignObj] noBeef: %s\ntVec.ref: %s\ntVec.eXp: %s\nB1p: %s\nB2p: %s\nint.ref: %s\nint.eXp: %s\n",
-                 noBeef, tVec.ref, tVec.eXp, B1p, B2p, intensityList.ref, intensityList.eXp ), file = function_param_input$redirect_output , sep = "\n" )
+    cat( sprintf("[getMappedRT -> getAlignObj] noBeef: %s", noBeef), file = function_param_input$redirect_output , sep = "\n" )
+    cat( sprintf("[getMappedRT -> getAlignObj] len tVec.ref: %s", length(tVec.ref) ), file = function_param_input$redirect_output , sep = "\n" )
+    cat( sprintf("[getMappedRT -> getAlignObj] len tVec.eXp: %s", length(tVec.eXp) ), file = function_param_input$redirect_output , sep = "\n" )
+    cat( sprintf("[getMappedRT -> getAlignObj] B1p: %s", B1p ), file = function_param_input$redirect_output , sep = "\n" )
+    cat( sprintf("[getMappedRT -> getAlignObj] B2p: %s", B2p ), file = function_param_input$redirect_output , sep = "\n" )
+    cat( sprintf("[getMappedRT -> getAlignObj] int.ref: %s", intensityList.ref ), file = function_param_input$redirect_output , sep = "\n" )
+    cat( sprintf("[getMappedRT -> getAlignObj] int.eXp: %s", intensityList.eXp ), file = function_param_input$redirect_output , sep = "\n" )
   }
   AlignObj <- alignChromatogramsCpp(intensityList.ref, intensityList.eXp,
                                     alignType = "hybrid", tVec.ref, tVec.eXp,
