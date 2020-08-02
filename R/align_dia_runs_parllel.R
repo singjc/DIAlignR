@@ -255,6 +255,13 @@ alignTargetedRuns_par <- function(dataPath, alignType = "hybrid", analyteInGroup
   oswFiles_dt <- data.table::rbindlist(oswFiles, use.names = TRUE, fill = TRUE, idcol = "run_id")
   oswFiles_dt$analytes <- oswFiles_dt$transition_group_id
   
+  if ( !is.null(analytes) ){
+    analytes_filter <- analytes
+    message(sprintf( "Filtering for analytes: %s", analytes_filter ))
+    oswFiles_dt %>%
+      dplyr::filter( analytes==analytes_filter ) -> oswFiles_dt
+  }
+  
   analyte_row_id_mapping <- data.table::data.table( transition_group_id = unique(oswFiles_dt$transition_group_id) ) %>% dplyr::arrange(transition_group_id) %>% tibble::rowid_to_column(var="analyte_row_id")
   analyte_row_id_mapping$n_analytes <- nrow(analyte_row_id_mapping)
   
