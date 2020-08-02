@@ -68,8 +68,8 @@ getAlignObj <- function(XICs.ref, XICs.eXp, Loess.fit, adaptiveRT, samplingTime,
     cat( sprintf("[getMappedRT -> getAlignObj] len tVec.eXp: %s", length(tVec.eXp) ), file = function_param_input$redirect_output , sep = "\n" )
     cat( sprintf("[getMappedRT -> getAlignObj] B1p: %s", B1p ), file = function_param_input$redirect_output , sep = "\n" )
     cat( sprintf("[getMappedRT -> getAlignObj] B2p: %s", B2p ), file = function_param_input$redirect_output , sep = "\n" )
-    cat( sprintf("[getMappedRT -> getAlignObj] int.ref: %s", intensityList.ref ), file = function_param_input$redirect_output , sep = "\n" )
-    cat( sprintf("[getMappedRT -> getAlignObj] int.eXp: %s", intensityList.eXp ), file = function_param_input$redirect_output , sep = "\n" )
+    cat( sprintf("[getMappedRT -> getAlignObj] len int.ref: %s", length(intensityList.ref) ), file = function_param_input$redirect_output , sep = "\n" )
+    cat( sprintf("[getMappedRT -> getAlignObj] len int.eXp: %s", length(intensityList.eXp) ), file = function_param_input$redirect_output , sep = "\n" )
   }
   AlignObj <- alignChromatogramsCpp(intensityList.ref, intensityList.eXp,
                                     alignType = "hybrid", tVec.ref, tVec.eXp,
