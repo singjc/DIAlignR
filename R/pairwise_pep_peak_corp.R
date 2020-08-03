@@ -62,11 +62,11 @@ getAlignObj <- function(XICs.ref, XICs.eXp, Loess.fit, adaptiveRT, samplingTime,
   # Perform dynamic programming for chromatogram alignment
   intensityList.ref <- lapply(XICs.ref, `[[`, 2) # Extracting intensity values
   intensityList.eXp <- lapply(XICs.eXp, `[[`, 2) # Extracting intensity values
-  if ( length(intensityList.ref[[1]])!=length(intensityList.eXp) ){
+  if ( length(intensityList.ref[[1]])!=length(intensityList.eXp[[1]]) ){
     if ( !is.null(function_param_input) ){
       cat( sprintf("[getMappedRT -> getAlignObj] WARN: Adding padding to first intensity vector"), file = function_param_input$redirect_output , sep = "" )
     }
-    if ( length(intensityList.ref[[1]]) > length(intensityList.eXp) ){
+    if ( length(intensityList.ref[[1]]) > length(intensityList.eXp[[1]]) ){
       if ( !is.null(function_param_input) ){
         cat( sprintf("Adding to first intensity vector of intensityList.eXp"), file = function_param_input$redirect_output , sep = "\n" )
       }
