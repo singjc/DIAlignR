@@ -63,7 +63,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
       # Get full OSW file for run pair for loess
       # TODO this is only temporary, not good to do this.
       oswFiles_list <- readRDS( file.path(getwd(), "oswFiles.rds") )
-      oswFiles_dt_pair <- data.table::rbindlist(oswFiles, use.names = TRUE, fill = TRUE, idcol = "run_id")
+      oswFiles_dt_pair <- data.table::rbindlist(oswFiles_list, use.names = TRUE, fill = TRUE, idcol = "run_id")
       oswFiles_dt_pair %>%
         dplyr::filter( run_id %in% c(ref, eXp) ) -> oswFiles_dt_pair
       
