@@ -60,6 +60,13 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
       Loess.fit <- loessFits[[pair]]
     } else{
       # Loess.fit <- getGlobalAlignment(oswFiles, ref, eXp, maxFdrLoess, spanvalue, fitType = "loess")
+      # Get full OSW file for run pair for loess
+      # TODO this is only temporary, not good to do this.
+      oswFiles_list <- readRDS( file.path(getwd(), "oswFiles.rds") )
+      oswFiles_dt_pair <- data.table::rbindlist(oswFiles, use.names = TRUE, fill = TRUE, idcol = "run_id")
+      oswFiles_dt_pair %>%
+        dplyr::filter( run_id %in% c(ref, eXp) ) -> oswFiles_dt_pair
+      
       maxFdrLoess_list <- seq(function_param_input$maxFdrLoess, 1, 0.05)
       i <- 1
       Loess.fit <- NULL
@@ -69,7 +76,7 @@ pairwise_align_par_func <- function( oswdata_runpair_data, XICs.ref, function_pa
         Loess.fit <- tryCatch(
           expr = {
             cat( sprintf("%s...", maxFdrLoess_i), file = function_param_input$redirect_output , sep = " " )
-            Loess.fit <- getGlobalAlignment(oswdata_runpair_data, ref, eXp, maxFdrLoess_i, function_param_input$spanvalue, fitType = "loess")
+            Loess.fit <- getGlobalAlignment(oswFiles_dt_pair, ref, eXp, maxFdrLoess_i, function_param_input$spanvalue, fitType = "loess")
           },
           error = function(e){
             # cat(sprintf("ERROR: The following error occured using maxFdrLoess %s: %s", maxFdrLoess_i, e$message), file = function_param_input$redirect_output , sep = "\n")

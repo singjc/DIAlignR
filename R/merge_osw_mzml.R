@@ -137,7 +137,7 @@ getOswFiles <- function(dataPath, filenames, maxFdrQuery = 0.05, analyteFDR = 0.
       }
     }
     
-    chromatogramIdAsInteger(chromHead)
+    # chromatogramIdAsInteger(chromHead)
     # Merge chromatogram indices with transition indices and save them.
     # Following function merges analytesInfo dataframe with the chromatogram Header.
     ## TODO: There is an issue with converting chromatogramId as integer if using sqMass mzPntrs. because Id contains string Precursor_ in it.

@@ -91,7 +91,7 @@ getAlignObj <- function(XICs.ref, XICs.eXp, Loess.fit, adaptiveRT, samplingTime,
     cat( sprintf("[getMappedRT -> getAlignObj] len int.eXp: %s", paste(unlist(lapply(intensityList.eXp, function(x) length(x))), collapse=", ") ), file = function_param_input$redirect_output , sep = "\n" )
   }
   AlignObj <- tryCatch( expr = {
-    AlignObj <- DIAlignR::alignChromatogramsCpp(intensityList.ref, intensityList.eXp,
+    AlignObj <- alignChromatogramsCpp(intensityList.ref, intensityList.eXp,
                                                  alignType = "hybrid", tVec.ref, tVec.eXp,
                                                  normalization = normalization, simType = simType,
                                                  B1p = B1p, B2p = B2p, noBeef = noBeef,
